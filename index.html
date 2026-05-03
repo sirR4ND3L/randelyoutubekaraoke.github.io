@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Randel Youtube Karaoke</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap');
+
+        body {
+            margin: 0;
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at 50% 0%, #1a0b2e 0%, #05010f 100%);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .neon-text {
+            color: #fff;
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #e60073, 0 0 40px #e60073, 0 0 80px #e60073;
+            margin: 20px 0 10px;
+            font-size: 28px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        button {
+            background: linear-gradient(45deg, #e60073, #ff0055);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(230, 0, 115, 0.4);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(230, 0, 115, 0.6);
+            background: linear-gradient(45deg, #ff0055, #ff3377);
+        }
+
+        .video-container {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            aspect-ratio: 16 / 9;
+            margin-top: 10px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2), 0 0 40px rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        #player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .controls {
+            margin: 15px;
+            padding: 20px;
+            border-radius: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            width: 90%;
+            max-width: 800px;
+            box-sizing: border-box;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+
+        input[type=range] {
+            accent-color: #00ffff;
+            cursor: pointer;
+        }
+
+        .progress-container {
+            width: 90%;
+            max-width: 800px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 10px 0;
+            cursor: pointer;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00ffff, #00b3ff);
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        .search-container {
+            margin: 20px;
+            padding: 20px;
+            border-radius: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            width: 90%;
+            max-width: 800px;
+            box-sizing: border-box;
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 15px 20px;
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        #searchInput:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .queue-container {
+            width: 90%;
+            max-width: 800px;
+            margin: 10px;
+            padding: 20px;
+            border-radius: 16px;
+            box-sizing: border-box;
+            margin-bottom: 40px;
+        }
+
+        .queue-container h3 {
+            margin-top: 0;
+            color: #00ffff;
+            font-size: 24px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .queue-list {
+            list-style: decimal inside;
+            padding: 0;
+            margin: 0;
+        }
+
+        .queue-list li {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+            border-radius: 8px;
+        }
+
+        .queue-list li:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .queue-list li:last-child {
+            border-bottom: none;
+        }
+
+        .remove-btn {
+            background: transparent;
+            color: #ff4d4d;
+            border: 1px solid #ff4d4d;
+            padding: 5px 10px;
+            margin: 0;
+            border-radius: 5px;
+            box-shadow: none;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .remove-btn:hover {
+            background: rgba(255, 77, 77, 0.2);
+            box-shadow: 0 0 10px rgba(255, 77, 77, 0.4);
+            transform: scale(1.05);
+        }
+
+        .song-title {
+            flex-grow: 1;
+            margin-right: 15px;
+        }
+
+        .main-layout {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1200px;
+            align-items: center;
+            gap: 20px;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 900px) {
+            .main-layout {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+        }
+
+        .left-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .video-container,
+        .controls,
+        .progress-container,
+        .queue-container {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2 id="nowPlaying" class="neon-text">Ready to Sing!</h2>
+
+    <div class="search-container glass-panel">
+        <input type="text" id="searchInput" placeholder="Search for a karaoke video...">
+        <button onclick="loadVideo(true)">Search & Play</button>
+        <button onclick="loadVideo(false)">Reserve</button>
+    </div>
+
+    <div class="main-layout">
+        <div class="left-panel">
+            <div class="video-container" id="videoContainer">
+                <div id="player"></div>
+            </div>
+
+            <div class="controls glass-panel">
+                <button onclick="playVideo()">Play (z)</button>
+                <button onclick="pauseVideo()">Pause (x)</button>
+                <button onclick="restartVideo()">Restart (c)</button>
+                <button onclick="playNextInQueue()">Next (v)</button>
+                <button onclick="toggleFullscreen()">Fullscreen (f)</button>
+
+                <div class="volume-control">
+                    <span>🔈</span>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="100"
+                        oninput="changeVolume(this.value)">
+                    <span>🔊</span>
+                </div>
+            </div>
+
+            <div class="progress-container glass-panel" onclick="seekVideo(event)">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="queue-container glass-panel">
+                <h3>Up Next</h3>
+                <ul class="queue-list" id="queueList">
+                    <li>Queue is empty</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load YouTube IFrame API
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.body.appendChild(tag);
+
+        var player;
+        var songQueue = [];
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '100%',
+                width: '100%',
+                videoId: '3kS5SGXtprA',
+                playerVars: {
+                    'rel': 0,
+                    'iv_load_policy': 3,
+                    'controls': 0,
+                    'disablekb': 1
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                playNextInQueue();
+            }
+        }
+
+        function setNowPlaying(title) {
+            const el = document.getElementById('nowPlaying');
+            el.innerText = title ? "🎵 " + title : "Ready to Sing!";
+        }
+
+        function playNextInQueue() {
+            if (songQueue.length > 0) {
+                let nextSong = songQueue.shift();
+                player.loadVideoById(nextSong.id);
+                setNowPlaying(nextSong.title);
+                updateQueueUI();
+            } else {
+                let videoData = player.getVideoData();
+                if (videoData && videoData.video_id) {
+                    player.cueVideoById(videoData.video_id);
+                } else {
+                    player.stopVideo();
+                }
+                setNowPlaying("");
+            }
+        }
+
+        function removeFromQueue(index) {
+            songQueue.splice(index, 1);
+            updateQueueUI();
+        }
+
+        function updateQueueUI() {
+            const list = document.getElementById('queueList');
+            if (songQueue.length === 0) {
+                list.innerHTML = '<li>Queue is empty</li>';
+                return;
+            }
+            list.innerHTML = '';
+            songQueue.forEach((song, index) => {
+                let li = document.createElement('li');
+
+                let titleSpan = document.createElement('span');
+                titleSpan.className = 'song-title';
+                titleSpan.innerText = (index + 1) + ". " + song.title;
+
+                let removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn';
+                removeBtn.innerText = '❌ Remove';
+                removeBtn.onclick = () => removeFromQueue(index);
+
+                li.appendChild(titleSpan);
+                li.appendChild(removeBtn);
+                list.appendChild(li);
+            });
+        }
+
+        function handleFoundVideo(id, playNow, title) {
+            let songName = title || "Video: " + id;
+            if (playNow) {
+                player.loadVideoById(id);
+                setNowPlaying(songName);
+            } else {
+                songQueue.push({ id: id, title: songName });
+                updateQueueUI();
+
+                let state = player.getPlayerState ? player.getPlayerState() : -1;
+                // If unstarted, ended, or cued, we can auto-play the reserved song
+                if (state === YT.PlayerState.ENDED || state === YT.PlayerState.UNSTARTED || state === YT.PlayerState.CUED || state === -1) {
+                    playNextInQueue();
+                }
+            }
+        }
+
+        function onPlayerReady() {
+            startSync();
+            player.setVolume(100);
+        }
+
+        function playVideo() {
+            player.playVideo();
+        }
+
+        function pauseVideo() {
+            player.pauseVideo();
+        }
+
+        function restartVideo() {
+            player.seekTo(0);
+            player.playVideo();
+        }
+
+        function changeVolume(val) {
+            if (player && player.setVolume) {
+                player.setVolume(val);
+            }
+        }
+
+        function toggleFullscreen() {
+            const container = document.getElementById('videoContainer');
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().catch(err => {
+                    console.error("Error attempting to enable fullscreen:", err);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function seekVideo(event) {
+            if (!player || !player.getDuration) return;
+            const container = event.currentTarget;
+            const rect = container.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const percent = clickX / rect.width;
+            const duration = player.getDuration();
+            if (duration) {
+                player.seekTo(duration * percent, true);
+            }
+        }
+
+        async function loadVideo(playNow = true) {
+            let query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+
+            let videoId = null;
+            try {
+                let url = new URL(query);
+                if (url.hostname.includes('youtube.com')) {
+                    videoId = url.searchParams.get('v');
+                } else if (url.hostname === 'youtu.be') {
+                    videoId = url.pathname.slice(1);
+                }
+            } catch (e) {
+                // Not a valid URL
+            }
+
+            if (!videoId && query.length === 11 && !query.includes(' ')) {
+                videoId = query;
+            }
+
+            if (videoId) {
+                document.getElementById('searchInput').value = ""; // clear input after finding
+                handleFoundVideo(videoId, playNow, "Direct Link / ID: " + videoId);
+                return;
+            }
+
+            let searchBtn = document.querySelector('.search-container button');
+            let originalText = searchBtn.innerText;
+            searchBtn.innerText = "Searching...";
+            searchBtn.disabled = true;
+            let foundId = null;
+            let foundTitle = null;
+
+            // Automatically append "karaoke" if it's not already in the search
+            let searchQuery = query;
+            if (!searchQuery.toLowerCase().includes('karaoke')) {
+                searchQuery += ' karaoke';
+            }
+
+            // =========================================================================
+            // ⭐️ YOUTUBE DATA API (RECOMMENDED FOR PRODUCTION / NETLIFY)
+            // To make search work reliably without CORS errors, 
+            // replace "YOUR_API_KEY_HERE" with a free YouTube Data API v3 Key.
+            // =========================================================================
+            const YOUTUBE_API_KEY = "AIzaSyBthjxnP2yj4_3tLVFhVHqRi7TwP2_jUlI";
+
+            // Make sure we have a valid-looking API key before trying
+            if (YOUTUBE_API_KEY && YOUTUBE_API_KEY.length > 20 && !YOUTUBE_API_KEY.includes('YOUR_API_KEY')) {
+                try {
+                    let res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${encodeURIComponent(searchQuery)}&type=video&videoEmbeddable=true&key=${YOUTUBE_API_KEY}`);
+                    if (res.ok) {
+                        let data = await res.json();
+                        if (data.items && data.items.length > 0) {
+                            foundId = data.items[0].id.videoId;
+                            foundTitle = data.items[0].snippet.title;
+                        }
+                    } else {
+                        console.error("YouTube API Error:", await res.text());
+                    }
+                } catch (e) {
+                    console.error("YouTube API Fetch Error", e);
+                }
+            }
+
+            // Fallback to public proxies if no API key is provided
+            if (!foundId) {
+                const instances = [
+                    'https://invidious.nerdvpn.de/api/v1/search?q=',
+                    'https://invidious.lunar.icu/api/v1/search?q=',
+                    'https://inv.tux.pizza/api/v1/search?q='
+                ];
+
+                const fetchSearch = async (url) => {
+                    try {
+                        let res = await fetch(url);
+                        if (res.ok) {
+                            let data = await res.json();
+                            let items = data.items || data;
+                            if (items && items.length > 0) {
+                                let video = items.find(item => item.type === "video" || item.videoId || (item.url && item.url.includes('/watch?v=')));
+                                if (video) {
+                                    foundTitle = video.title || "";
+                                    return video.videoId || (video.url ? video.url.split('v=')[1] : null);
+                                }
+                                if (items[0].videoId) {
+                                    foundTitle = items[0].title || "";
+                                    return items[0].videoId;
+                                }
+                            }
+                        }
+                    } catch (e) { }
+                    return null;
+                };
+
+                for (let baseUrl of instances) {
+                    let targetUrl = baseUrl + encodeURIComponent(searchQuery);
+
+                    // 1. Try direct fetch
+                    foundId = await fetchSearch(targetUrl);
+                    if (foundId) break;
+
+                    // 2. Try via codetabs proxy
+                    foundId = await fetchSearch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`);
+                    if (foundId) break;
+
+                    // 3. Try via allorigins proxy
+                    try {
+                        let res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
+                        if (res.ok) {
+                            let wrapper = await res.json();
+                            let data = JSON.parse(wrapper.contents);
+                            let items = data.items || data;
+                            if (items && items.length > 0) {
+                                let video = items.find(item => item.type === "video" || item.videoId || (item.url && item.url.includes('/watch?v=')));
+                                if (video) {
+                                    foundId = video.videoId || (video.url ? video.url.split('v=')[1] : null);
+                                    foundTitle = video.title || "";
+                                }
+                                if (!foundId && items[0].videoId) {
+                                    foundId = items[0].videoId;
+                                    foundTitle = items[0].title || "";
+                                }
+                                if (foundId) break;
+                            }
+                        }
+                    } catch (e) { }
+                }
+            }
+
+            searchBtn.innerText = originalText;
+            searchBtn.disabled = false;
+
+            if (foundId) {
+                document.getElementById('searchInput').value = ""; // clear input after finding
+                handleFoundVideo(foundId, playNow, foundTitle || searchQuery);
+            } else {
+                alert("Search failed due to strict browser CORS restrictions on Netlify. Please provide a YouTube API Key in the code, or paste a direct YouTube URL instead.");
+            }
+        }
+
+        function startSync() {
+            setInterval(() => {
+                if (!player || !player.getCurrentTime) return;
+
+                const currentTime = player.getCurrentTime();
+                const duration = player.getDuration();
+
+                // Progress bar
+                if (duration) {
+                    const percent = (currentTime / duration) * 100;
+                    document.getElementById("progressBar").style.width = percent + "%";
+
+                    // Hack to prevent YouTube's end screen from showing:
+                    // If we are within 0.5 seconds of the video ending, force skip to next.
+                    if (duration - currentTime <= 0.5 && player.getPlayerState() === YT.PlayerState.PLAYING) {
+                        playNextInQueue();
+                    }
+                }
+
+            }, 100); // every 100ms
+        }
+
+        document.addEventListener('keydown', function (event) {
+            const isInputFocused = document.activeElement === document.getElementById('searchInput');
+
+            if (isInputFocused) {
+                if (event.key === 'Enter') {
+                    if (event.shiftKey) {
+                        loadVideo(false); // Shift+Enter to Reserve
+                    } else {
+                        loadVideo(true); // Enter to Search & Play
+                    }
+                }
+                // Do not trigger global shortcuts when typing
+                return;
+            }
+
+            switch (event.key.toLowerCase()) {
+                case 'z': playVideo(); break;
+                case 'x': pauseVideo(); break;
+                case 'c': restartVideo(); break;
+                case 'v': playNextInQueue(); break;
+                case 'f': toggleFullscreen(); break;
+            }
+        });
+    </script>
+
+</body>
+
+</html>
