@@ -57,6 +57,12 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.05);
             transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: islandFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes islandFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(4px); }
         }
 
         .dynamic-island h2 {
@@ -85,11 +91,38 @@
             border: 0.5px solid var(--glass-border);
             border-radius: 28px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(255, 255, 255, 0.03),
+                transparent
+            );
+            transform: rotate(45deg);
+            transition: 0.6s;
+            pointer-events: none;
+        }
+
+        .glass-panel:hover::before {
+            left: 100%;
+            top: 100%;
         }
 
         .glass-panel:hover {
             box-shadow: 0 12px 48px 0 rgba(0, 0, 0, 0.6);
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.25);
         }
 
         /* Buttons */
@@ -170,7 +203,6 @@
             top: 100px;
         }
 
-        /* Video Container */
         .video-container {
             position: relative;
             width: 100%;
@@ -180,6 +212,11 @@
             background: #000;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .video-container:hover {
+            transform: scale(1.01);
         }
 
         #player {
@@ -298,12 +335,46 @@
 
         .controls {
             margin-top: 20px;
-            padding: 20px;
+            padding: 24px;
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
             width: 100%;
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: nowrap;
+            justify-content: flex-start; /* Start for scrolling */
+            gap: 12px;
+            width: 100%;
+            overflow-x: auto;
+            padding: 10px 20px;
+            scroll-snap-type: x proximity;
+            scroll-padding: 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .button-row button {
+            flex: 0 0 auto;
+            scroll-snap-align: start;
+            min-width: 100px;
+        }
+
+        /* Hide scrollbar for button row */
+        .button-row::-webkit-scrollbar {
+            display: none;
+        }
+        .button-row {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        @media (min-width: 600px) {
+            .button-row {
+                justify-content: center;
+            }
         }
 
         /* Volume & Progress */
@@ -323,21 +394,20 @@
             width: 120px;
         }
 
-        .progress-container {
-            width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            margin: 20px 0;
-            overflow: hidden;
-            cursor: pointer;
-        }
 
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background: var(--accent-color);
-            transition: width 0.1s linear;
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         /* Queue List */
@@ -361,18 +431,48 @@
         .queue-list li {
             padding: 16px;
             margin-bottom: 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
             align-items: center;
-            gap: 15px;
-            transition: all 0.2s ease;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
         }
 
         .queue-list li:hover {
-            background: rgba(255, 255, 255, 0.07);
-            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .song-index {
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .next-tag {
+            position: absolute;
+            top: -8px;
+            right: 15px;
+            background: var(--accent-color);
+            color: white;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 10px rgba(0, 122, 255, 0.3);
         }
 
         .song-title {
@@ -380,29 +480,52 @@
             font-size: 14px;
             font-weight: 500;
             color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .remove-btn {
+        .queue-remove-btn {
             background: rgba(255, 59, 48, 0.1);
             color: #ff3b30;
-            padding: 6px 12px;
-            font-size: 12px;
+            padding: 8px;
+            font-size: 14px;
             border-radius: 12px;
             border: none;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.6;
+            flex-shrink: 0;
         }
 
-        .remove-btn:hover {
+        .queue-remove-btn:hover {
             background: rgba(255, 59, 48, 0.2);
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .cancel-btn {
+            background: rgba(255, 59, 48, 0.15) !important;
+            border: 0.5px solid rgba(255, 59, 48, 0.3) !important;
+            color: #ff453a !important;
+        }
+
+        .cancel-btn:hover {
+            background: rgba(255, 59, 48, 0.25) !important;
+            box-shadow: 0 0 15px rgba(255, 59, 48, 0.2);
         }
 
         /* Icons/Glyphs */
         .icon {
             font-size: 18px;
         }
-        /* Shortcuts Legend */
+        /* Shortcuts Legend (Sidebar) */
         .shortcuts-legend {
             margin-top: 24px;
-            padding: 20px;
+            padding: 24px;
             width: 100%;
         }
 
@@ -426,6 +549,7 @@
             align-items: center;
             gap: 10px;
             font-size: 13px;
+            color: var(--text-secondary);
         }
 
         .key {
@@ -438,6 +562,7 @@
             text-align: center;
             box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
             font-family: monospace;
+            color: var(--text-primary);
         }
     </style>
 </head>
@@ -476,11 +601,14 @@
             </div>
 
             <div class="controls glass-panel">
-                <button onclick="playVideo()"><span class="icon">▶️</span> Play</button>
-                <button onclick="pauseVideo()"><span class="icon">⏸️</span> Pause</button>
-                <button onclick="restartVideo()"><span class="icon">🔄</span> Restart</button>
-                <button onclick="playNextInQueue()"><span class="icon">⏭️</span> Next</button>
-                <button onclick="toggleFullscreen()"><span class="icon">⛶</span> Full</button>
+                <div class="button-row">
+                    <button onclick="playVideo()"><span class="icon">▶️</span> Play</button>
+                    <button onclick="pauseVideo()"><span class="icon">⏸️</span> Pause</button>
+                    <button onclick="restartVideo()"><span class="icon">🔄</span> Restart</button>
+                    <button onclick="cancelCurrentSong()" class="cancel-btn"><span class="icon">⏹️</span> Cancel</button>
+                    <button onclick="playNextInQueue()"><span class="icon">⏭️</span> Next</button>
+                    <button onclick="toggleFullscreen()"><span class="icon">⛶</span> Full</button>
+                </div>
 
                 <div class="volume-control">
                     <span>🔈</span>
@@ -490,9 +618,6 @@
                 </div>
             </div>
 
-            <div class="progress-container" onclick="seekVideo(event)">
-                <div class="progress-bar" id="progressBar"></div>
-            </div>
         </div>
 
         <div class="right-panel">
@@ -509,10 +634,11 @@
                     <div class="shortcut-item"><span class="key">Z</span> <span>Play</span></div>
                     <div class="shortcut-item"><span class="key">X</span> <span>Pause</span></div>
                     <div class="shortcut-item"><span class="key">C</span> <span>Restart</span></div>
-                    <div class="shortcut-item"><span class="key">V</span> <span>Next Song</span></div>
-                    <div class="shortcut-item"><span class="key">F</span> <span>Fullscreen</span></div>
-                    <div class="shortcut-item"><span class="key">↵</span> <span>Search & Play</span></div>
-                    <div class="shortcut-item"><span class="key">⇧+↵</span> <span>Reserve</span></div>
+                    <div class="shortcut-item"><span class="key">B</span> <span>Cancel</span></div>
+                    <div class="shortcut-item"><span class="key">V</span> <span>Next</span></div>
+                    <div class="shortcut-item"><span class="key">F</span> <span>Full</span></div>
+                    <div class="shortcut-item"><span class="key">↵</span> <span>Enter</span></div>
+                    <div class="shortcut-item"><span class="key">⇧+↵</span> <span>Res</span></div>
                 </div>
             </div>
         </div>
@@ -591,22 +717,39 @@
         function updateQueueUI() {
             const list = document.getElementById('queueList');
             if (songQueue.length === 0) {
-                list.innerHTML = '<li>Queue is empty</li>';
+                list.innerHTML = '<li style="justify-content: center; color: var(--text-secondary); font-style: italic;">Queue is empty</li>';
                 return;
             }
             list.innerHTML = '';
             songQueue.forEach((song, index) => {
                 let li = document.createElement('li');
+                
+                // Add "Next Up" tag to the first item
+                if (index === 0) {
+                    let tag = document.createElement('div');
+                    tag.className = 'next-tag';
+                    tag.innerText = 'Next Up';
+                    li.appendChild(tag);
+                }
+
+                let indexBadge = document.createElement('div');
+                indexBadge.className = 'song-index';
+                indexBadge.innerText = (index + 1);
 
                 let titleSpan = document.createElement('span');
                 titleSpan.className = 'song-title';
-                titleSpan.innerText = (index + 1) + ". " + song.title;
+                titleSpan.innerText = song.title;
 
                 let removeBtn = document.createElement('button');
-                removeBtn.className = 'remove-btn';
-                removeBtn.innerText = '❌ Remove';
-                removeBtn.onclick = () => removeFromQueue(index);
+                removeBtn.className = 'queue-remove-btn';
+                removeBtn.innerHTML = '✕';
+                removeBtn.title = 'Remove from queue';
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    removeFromQueue(index);
+                };
 
+                li.appendChild(indexBadge);
                 li.appendChild(titleSpan);
                 li.appendChild(removeBtn);
                 list.appendChild(li);
@@ -665,17 +808,6 @@
             }
         }
 
-        function seekVideo(event) {
-            if (!player || !player.getDuration) return;
-            const container = event.currentTarget;
-            const rect = container.getBoundingClientRect();
-            const clickX = event.clientX - rect.left;
-            const percent = clickX / rect.width;
-            const duration = player.getDuration();
-            if (duration) {
-                player.seekTo(duration * percent, true);
-            }
-        }
 
         async function loadVideo(playNow = true) {
             let query = document.getElementById('searchInput').value.trim();
@@ -950,15 +1082,23 @@
                 const duration = player.getDuration();
 
                 if (duration) {
-                    const percent = (currentTime / duration) * 100;
-                    document.getElementById("progressBar").style.width = percent + "%";
-
                     if (duration - currentTime <= 0.5 && player.getPlayerState() === YT.PlayerState.PLAYING) {
                         playNextInQueue();
                     }
                 }
 
             }, 100);
+        }
+
+        function cancelCurrentSong() {
+            if (songQueue.length > 0) {
+                playNextInQueue();
+            } else {
+                if (player && player.stopVideo) {
+                    player.stopVideo();
+                }
+                setNowPlaying("");
+            }
         }
 
         document.addEventListener('keydown', function (event) {
@@ -979,6 +1119,7 @@
                 case 'z': playVideo(); break;
                 case 'x': pauseVideo(); break;
                 case 'c': restartVideo(); break;
+                case 'b': cancelCurrentSong(); break;
                 case 'v': playNextInQueue(); break;
                 case 'f': toggleFullscreen(); break;
             }
