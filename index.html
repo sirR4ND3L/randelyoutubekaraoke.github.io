@@ -412,20 +412,14 @@
 
         /* Queue List */
         .queue-container {
-            padding: 24px;
+            padding: 24px 16px;
             width: 100%;
-        }
-
-        .queue-container h3 {
-            margin: 0 0 20px;
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
         }
 
         .queue-list {
             list-style: none;
             padding: 0;
+            margin-top: 10px;
         }
 
         .queue-list li {
@@ -462,27 +456,30 @@
 
         .next-tag {
             position: absolute;
-            top: -8px;
-            right: 15px;
+            top: 6px;
+            right: 40px;
             background: var(--accent-color);
             color: white;
-            font-size: 9px;
+            font-size: 8px;
             font-weight: 800;
-            padding: 2px 8px;
-            border-radius: 10px;
+            padding: 1px 6px;
+            border-radius: 6px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            box-shadow: 0 4px 10px rgba(0, 122, 255, 0.3);
+            box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+            pointer-events: none;
+            z-index: 2;
         }
 
         .song-title {
             flex: 1;
-            font-size: 14px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.9);
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.95);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            padding-right: 10px;
         }
 
         .queue-remove-btn {
@@ -606,7 +603,6 @@
                     <button onclick="pauseVideo()"><span class="icon">⏸️</span> Pause</button>
                     <button onclick="restartVideo()"><span class="icon">🔄</span> Restart</button>
                     <button onclick="cancelCurrentSong()" class="cancel-btn"><span class="icon">⏹️</span> Cancel</button>
-                    <button onclick="playNextInQueue()"><span class="icon">⏭️</span> Next</button>
                     <button onclick="toggleFullscreen()"><span class="icon">⛶</span> Full</button>
                 </div>
 
@@ -635,7 +631,6 @@
                     <div class="shortcut-item"><span class="key">X</span> <span>Pause</span></div>
                     <div class="shortcut-item"><span class="key">C</span> <span>Restart</span></div>
                     <div class="shortcut-item"><span class="key">B</span> <span>Cancel</span></div>
-                    <div class="shortcut-item"><span class="key">V</span> <span>Next</span></div>
                     <div class="shortcut-item"><span class="key">F</span> <span>Full</span></div>
                     <div class="shortcut-item"><span class="key">↵</span> <span>Enter</span></div>
                     <div class="shortcut-item"><span class="key">⇧+↵</span> <span>Res</span></div>
@@ -1120,7 +1115,6 @@
                 case 'x': pauseVideo(); break;
                 case 'c': restartVideo(); break;
                 case 'b': cancelCurrentSong(); break;
-                case 'v': playNextInQueue(); break;
                 case 'f': toggleFullscreen(); break;
             }
         });
