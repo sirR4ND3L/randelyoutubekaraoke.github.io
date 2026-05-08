@@ -7,324 +7,153 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+
+        :root {
+            --bg-color: #000000;
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --accent-color: #007aff;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.5);
+            --dynamic-island-bg: #1c1c1e;
+        }
 
         body {
             margin: 0;
-            font-family: 'Outfit', sans-serif;
-            background: radial-gradient(circle at 50% 0%, #1a0b2e 0%, #05010f 100%);
-            color: #fff;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at 50% -20%, #1c1c1e 0%, #000000 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
+        /* Dynamic Island Style Header */
+        .header-container {
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            margin-bottom: 30px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dynamic-island {
+            background: var(--dynamic-island-bg);
+            padding: 8px 20px;
+            border-radius: 30px;
+            min-width: 180px;
+            max-width: 90%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .dynamic-island h2 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: -0.2px;
+            color: var(--text-primary);
+        }
+
+        .dynamic-island.active {
+            padding: 12px 30px;
+            border-radius: 35px;
+            background: #000;
+            box-shadow: 0 0 20px rgba(0, 122, 255, 0.2);
+        }
+
+        /* Glass Panel System */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 0.5px solid var(--glass-border);
+            border-radius: 28px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            box-shadow: 0 12px 48px 0 rgba(0, 0, 0, 0.6);
+        }
+
+        /* Buttons */
+        button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 0.5px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 14px 28px;
+            margin: 4px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-
-        .neon-text {
-            color: #fff;
-            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #e60073, 0 0 40px #e60073, 0 0 80px #e60073;
-            margin: 20px 0 10px;
-            font-size: 28px;
-            text-align: center;
-            letter-spacing: 2px;
-        }
-
-        button {
-            background: linear-gradient(45deg, #e60073, #ff0055);
-            border: none;
-            color: white;
-            padding: 12px 24px;
-            margin: 5px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(230, 0, 115, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(230, 0, 115, 0.6);
-            background: linear-gradient(45deg, #ff0055, #ff3377);
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.02);
         }
 
-        .video-container {
-            position: relative;
-            width: 90%;
-            max-width: 800px;
-            aspect-ratio: 16 / 9;
-            margin-top: 10px;
-            border-radius: 16px;
-            overflow: hidden;
-            background: #000;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2), 0 0 40px rgba(0, 255, 255, 0.1);
-            border: 1px solid rgba(0, 255, 255, 0.3);
+        button:active {
+            transform: scale(0.96);
         }
 
-        .player-placeholder {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #05010f 0%, #1a0b2e 50%, #05010f 100%);
-            z-index: 2;
-            text-align: center;
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
+        button.primary {
+            background: var(--accent-color);
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
         }
 
-        /* Cyberpunk Scanlines */
-        .player-placeholder::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 255, 0.03), rgba(0, 255, 255, 0.03));
-            background-size: 100% 4px, 3px 100%;
-            pointer-events: none;
-            z-index: 3;
+        button.primary:hover {
+            background: #0084ff;
+            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.5);
         }
 
-        .player-placeholder.hidden {
-            opacity: 0;
-            pointer-events: none;
-            transform: scale(1.05);
-        }
-
-        .welcome-content {
-            padding: 20px;
-            z-index: 4;
-            position: relative;
-        }
-
-        .welcome-content h1 {
-            font-size: clamp(28px, 6vw, 48px);
-            margin: 15px 0;
-            background: linear-gradient(90deg, #00ffff, #ff00ff, #00ffff);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-            font-weight: 800;
-            animation: shine 4s linear infinite;
-        }
-
-        @keyframes shine {
-            to { background-position: 200% center; }
-        }
-
-        .welcome-content p {
-            font-size: 18px;
-            color: rgba(0, 255, 255, 0.6);
-            margin-bottom: 25px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .mic-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 0 20px #e60073);
-            animation: float 4s ease-in-out infinite;
-            display: inline-block;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(-5deg); }
-            50% { transform: translateY(-25px) rotate(10deg); }
-        }
-
-        #player {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        .controls {
-            margin: 15px;
-            padding: 20px;
-            border-radius: 16px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            width: 90%;
-            max-width: 800px;
-            box-sizing: border-box;
-        }
-
-        .volume-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-left: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 8px 15px;
-            border-radius: 20px;
-        }
-
-        input[type=range] {
-            accent-color: #00ffff;
-            cursor: pointer;
-        }
-
-        .progress-container {
-            width: 90%;
-            max-width: 800px;
-            height: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 6px;
-            overflow: hidden;
-            margin: 10px 0;
-            cursor: pointer;
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
-        }
-
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #00ffff, #00b3ff);
-            box-shadow: 0 0 10px #00ffff;
-        }
-
-        .search-container {
-            margin: 20px;
-            padding: 20px;
-            border-radius: 16px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-            width: 90%;
-            max-width: 800px;
-            box-sizing: border-box;
-        }
-
-        #searchInput {
-            flex: 1;
-            padding: 15px 20px;
-            border-radius: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(0, 0, 0, 0.4);
-            color: white;
-            font-size: 16px;
-            outline: none;
-            transition: all 0.3s ease;
-            font-family: inherit;
-        }
-
-        #searchInput:focus {
-            border-color: #00ffff;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-        }
-
-        .queue-container {
-            width: 90%;
-            max-width: 800px;
-            margin: 10px;
-            padding: 20px;
-            border-radius: 16px;
-            box-sizing: border-box;
-            margin-bottom: 40px;
-        }
-
-        .queue-container h3 {
-            margin-top: 0;
-            color: #00ffff;
-            font-size: 24px;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 10px;
-        }
-
-        .queue-list {
-            list-style: decimal inside;
-            padding: 0;
-            margin: 0;
-        }
-
-        .queue-list li {
-            padding: 12px 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            color: #e0e0e0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background 0.2s;
-            border-radius: 8px;
-        }
-
-        .queue-list li:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .queue-list li:last-child {
-            border-bottom: none;
-        }
-
-        .remove-btn {
-            background: transparent;
-            color: #ff4d4d;
-            border: 1px solid #ff4d4d;
-            padding: 5px 10px;
-            margin: 0;
-            border-radius: 5px;
-            box-shadow: none;
-            font-size: 12px;
-            flex-shrink: 0;
-        }
-
-        .remove-btn:hover {
-            background: rgba(255, 77, 77, 0.2);
-            box-shadow: 0 0 10px rgba(255, 77, 77, 0.4);
-            transform: scale(1.05);
-        }
-
-        .song-title {
-            flex-grow: 1;
-            margin-right: 15px;
-        }
-
+        /* Layout */
         .main-layout {
             display: flex;
             flex-direction: column;
             width: 100%;
             max-width: 1200px;
             align-items: center;
-            gap: 20px;
-            padding: 0 20px;
+            gap: 24px;
+            padding: 0 20px 40px;
             box-sizing: border-box;
         }
 
-        @media (min-width: 900px) {
+        @media (min-width: 1000px) {
             .main-layout {
                 flex-direction: row;
                 align-items: flex-start;
+                gap: 30px;
             }
         }
 
         .left-panel {
-            flex: 2;
+            flex: 2.2;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -337,24 +166,284 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
+            position: sticky;
+            top: 100px;
         }
 
-        .video-container,
-        .controls,
-        .progress-container,
-        .queue-container {
+        /* Video Container */
+        .video-container {
+            position: relative;
             width: 100%;
+            aspect-ratio: 16 / 9;
+            border-radius: 32px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .player-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #111;
+            z-index: 2;
+            transition: opacity 0.8s ease;
+        }
+        .player-placeholder.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .welcome-content {
+            padding: 20px;
+            z-index: 4;
+            position: relative;
+            text-align: center;
+        }
+        .welcome-content h1 {
+            font-size: clamp(24px, 5vw, 40px);
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+            background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .mic-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 30px rgba(0, 122, 255, 0.5));
+        }
+
+        /* Visualizer */
+        .visualizer-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            pointer-events: none;
+            z-index: 5;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.4) 0%, transparent 100%);
+        }
+
+        #visualizerCanvas {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 10px var(--accent-color));
+        }
+
+        .mic-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: rgba(0,0,0,0.5);
+            padding: 5px 12px;
+            border-radius: 20px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .mic-status.active {
+            color: #4cd964;
+        }
+
+        /* Search & Controls */
+        .search-container {
+            width: 100%;
+            max-width: 700px;
+            padding: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            border-radius: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 12px 25px;
+            border-radius: 30px;
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .controls {
+            margin-top: 20px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        /* Volume & Progress */
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-top: 10px;
+        }
+
+        input[type=range] {
+            accent-color: var(--accent-color);
+            height: 4px;
+            width: 120px;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--accent-color);
+            transition: width 0.1s linear;
+        }
+
+        /* Queue List */
+        .queue-container {
+            padding: 24px;
+            width: 100%;
+        }
+
+        .queue-container h3 {
+            margin: 0 0 20px;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .queue-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .queue-list li {
+            padding: 16px;
+            margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s ease;
+        }
+
+        .queue-list li:hover {
+            background: rgba(255, 255, 255, 0.07);
+            transform: translateY(-2px);
+        }
+
+        .song-title {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .remove-btn {
+            background: rgba(255, 59, 48, 0.1);
+            color: #ff3b30;
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 12px;
+            border: none;
+        }
+
+        .remove-btn:hover {
+            background: rgba(255, 59, 48, 0.2);
+        }
+
+        /* Icons/Glyphs */
+        .icon {
+            font-size: 18px;
+        }
+        /* Shortcuts Legend */
+        .shortcuts-legend {
+            margin-top: 24px;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .shortcuts-legend h4 {
+            margin: 0 0 15px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .shortcut-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .shortcut-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .key {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            min-width: 15px;
+            text-align: center;
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+            font-family: monospace;
         }
     </style>
 </head>
 
 <body>
 
-    <h2 id="nowPlaying" class="neon-text">Ready to Sing!</h2>
+    <div class="header-container">
+        <div id="dynamicIsland" class="dynamic-island">
+            <h2 id="nowPlaying">Ready to Sing</h2>
+        </div>
+    </div>
 
     <div class="search-container glass-panel">
-        <input type="text" id="searchInput" placeholder="Search for a karaoke video...">
-        <button onclick="loadVideo(true)">Search & Play</button>
+        <input type="text" id="searchInput" placeholder="Search for a song...">
+        <button class="primary" onclick="loadVideo(true)">Play Now</button>
         <button onclick="loadVideo(false)">Reserve</button>
     </div>
 
@@ -362,21 +451,27 @@
         <div class="left-panel">
             <div class="video-container" id="videoContainer">
                 <div id="player"></div>
+                <div id="micStatus" class="mic-status" onclick="toggleVisualizer()">
+                    <span>🎤</span> <span id="micText">Mic Visualizer: Off</span>
+                </div>
+                <div class="visualizer-overlay">
+                    <canvas id="visualizerCanvas"></canvas>
+                </div>
                 <div id="playerPlaceholder" class="player-placeholder">
                     <div class="welcome-content">
-                        <div class="mic-icon">🎤</div>
-                        <h1>Ready to Sing?</h1>
-                        <p>Search for a song</p>
+                        <div class="mic-icon">🎙️</div>
+                        <h1>Karaoke Pro</h1>
+                        <p style="color: var(--text-secondary)">Next Gen Glass Experience</p>
                     </div>
                 </div>
             </div>
 
             <div class="controls glass-panel">
-                <button onclick="playVideo()">Play (z)</button>
-                <button onclick="pauseVideo()">Pause (x)</button>
-                <button onclick="restartVideo()">Restart (c)</button>
-                <button onclick="playNextInQueue()">Next (v)</button>
-                <button onclick="toggleFullscreen()">Fullscreen (f)</button>
+                <button onclick="playVideo()"><span class="icon">▶️</span> Play</button>
+                <button onclick="pauseVideo()"><span class="icon">⏸️</span> Pause</button>
+                <button onclick="restartVideo()"><span class="icon">🔄</span> Restart</button>
+                <button onclick="playNextInQueue()"><span class="icon">⏭️</span> Next</button>
+                <button onclick="toggleFullscreen()"><span class="icon">⛶</span> Full</button>
 
                 <div class="volume-control">
                     <span>🔈</span>
@@ -386,7 +481,7 @@
                 </div>
             </div>
 
-            <div class="progress-container glass-panel" onclick="seekVideo(event)">
+            <div class="progress-container" onclick="seekVideo(event)">
                 <div class="progress-bar" id="progressBar"></div>
             </div>
         </div>
@@ -397,6 +492,19 @@
                 <ul class="queue-list" id="queueList">
                     <li>Queue is empty</li>
                 </ul>
+            </div>
+
+            <div class="shortcuts-legend glass-panel">
+                <h4>Shortcuts</h4>
+                <div class="shortcut-grid">
+                    <div class="shortcut-item"><span class="key">Z</span> <span>Play</span></div>
+                    <div class="shortcut-item"><span class="key">X</span> <span>Pause</span></div>
+                    <div class="shortcut-item"><span class="key">C</span> <span>Restart</span></div>
+                    <div class="shortcut-item"><span class="key">V</span> <span>Next Song</span></div>
+                    <div class="shortcut-item"><span class="key">F</span> <span>Fullscreen</span></div>
+                    <div class="shortcut-item"><span class="key">↵</span> <span>Search & Play</span></div>
+                    <div class="shortcut-item"><span class="key">⇧+↵</span> <span>Reserve</span></div>
+                </div>
             </div>
         </div>
     </div>
@@ -436,12 +544,16 @@
         function setNowPlaying(title) {
             const el = document.getElementById('nowPlaying');
             const placeholder = document.getElementById('playerPlaceholder');
+            const island = document.getElementById('dynamicIsland');
+            
             if (title) {
                 el.innerText = "🎵 " + title;
                 placeholder.classList.add('hidden');
+                island.classList.add('active');
             } else {
-                el.innerText = "Ready to Sing!";
+                el.innerText = "Ready to Sing";
                 placeholder.classList.remove('hidden');
+                island.classList.remove('active');
             }
         }
 
@@ -696,6 +808,131 @@
             }
         }
 
+        // =========================================================================
+        // 🎙️ HYBRID REACTIVE VISUALIZER LOGIC
+        // =========================================================================
+        let audioContext;
+        let analyser;
+        let dataArray;
+        let micStream;
+        let visualizerInitialized = false;
+        let simTime = 0;
+
+        async function toggleVisualizer() {
+            const statusEl = document.getElementById('micStatus');
+            const textEl = document.getElementById('micText');
+
+            if (visualizerInitialized) {
+                // TURN OFF: Stop mic tracks and revert to simulation
+                if (micStream) {
+                    micStream.getTracks().forEach(track => track.stop());
+                }
+                visualizerInitialized = false;
+                statusEl.classList.remove('active');
+                textEl.innerText = "Mic Visualizer: Off";
+                return;
+            }
+
+            // TURN ON: Request mic and start live mode
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                const source = audioContext.createMediaStreamSource(micStream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 64; 
+                
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+                source.connect(analyser);
+                
+                visualizerInitialized = true;
+                statusEl.classList.add('active');
+                textEl.innerText = "Mic Visualizer: Live";
+            } catch (err) {
+                console.error("Microphone access denied:", err);
+                alert("Please allow microphone access for Live Mode!");
+            }
+        }
+
+        function drawVisualizer() {
+            const canvas = document.getElementById('visualizerCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            // Pre-fill dataArray for simulation if not yet initialized
+            if (!dataArray) dataArray = new Uint8Array(32);
+
+            function render() {
+                requestAnimationFrame(render);
+                simTime += 0.05;
+                
+                const isPlaying = player && player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING;
+                
+                if (visualizerInitialized && analyser) {
+                    analyser.getByteFrequencyData(dataArray);
+                } else {
+                    // SIMULATION MODE: Create rhythmic wave patterns
+                    for (let i = 0; i < dataArray.length; i++) {
+                        if (isPlaying) {
+                            // Rhythmic pulse
+                            const wave = Math.sin(simTime + i * 0.3) * 0.5 + 0.5;
+                            const noise = Math.random() * 0.2;
+                            dataArray[i] = (wave + noise) * 150;
+                        } else {
+                            // Slow resting pulse
+                            dataArray[i] = (Math.sin(simTime * 0.5 + i * 0.1) * 0.5 + 0.5) * 40;
+                        }
+                    }
+                }
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const barWidth = (canvas.width / dataArray.length) * 0.8;
+                let x = 0;
+                
+                for (let i = 0; i < dataArray.length; i++) {
+                    let barHeight = (dataArray[i] / 255) * canvas.height;
+                    
+                    if (!isPlaying && visualizerInitialized) barHeight *= 0.1;
+
+                    const gradient = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
+                    // Live mode is blue, Simulation is a softer Cyan/Azure
+                    if (visualizerInitialized) {
+                        gradient.addColorStop(0, 'rgba(0, 122, 255, 0.9)');
+                        gradient.addColorStop(1, 'rgba(0, 200, 255, 0.5)');
+                    } else {
+                        gradient.addColorStop(0, 'rgba(0, 200, 255, 0.4)');
+                        gradient.addColorStop(1, 'rgba(0, 255, 255, 0.1)');
+                    }
+                    
+                    ctx.fillStyle = gradient;
+                    
+                    const radius = barWidth / 2;
+                    const barX = x + (canvas.width / dataArray.length - barWidth) / 2;
+                    const barY = canvas.height - barHeight;
+                    
+                    if (barHeight > 1) {
+                        ctx.beginPath();
+                        ctx.roundRect(barX, barY, barWidth, barHeight, [radius, radius, 0, 0]);
+                        ctx.fill();
+                    }
+                    
+                    x += canvas.width / dataArray.length;
+                }
+            }
+            render();
+        }
+
+        // Start simulation immediately on load
+        window.addEventListener('load', () => {
+            drawVisualizer();
+        });
+
         function startSync() {
             setInterval(() => {
                 if (!player || !player.getCurrentTime) return;
@@ -703,19 +940,16 @@
                 const currentTime = player.getCurrentTime();
                 const duration = player.getDuration();
 
-                // Progress bar
                 if (duration) {
                     const percent = (currentTime / duration) * 100;
                     document.getElementById("progressBar").style.width = percent + "%";
 
-                    // Hack to prevent YouTube's end screen from showing:
-                    // If we are within 0.5 seconds of the video ending, force skip to next.
                     if (duration - currentTime <= 0.5 && player.getPlayerState() === YT.PlayerState.PLAYING) {
                         playNextInQueue();
                     }
                 }
 
-            }, 100); // every 100ms
+            }, 100);
         }
 
         document.addEventListener('keydown', function (event) {
@@ -724,12 +958,11 @@
             if (isInputFocused) {
                 if (event.key === 'Enter') {
                     if (event.shiftKey) {
-                        loadVideo(false); // Shift+Enter to Reserve
+                        loadVideo(false);
                     } else {
-                        loadVideo(true); // Enter to Search & Play
+                        loadVideo(true);
                     }
                 }
-                // Do not trigger global shortcuts when typing
                 return;
             }
 
@@ -742,7 +975,5 @@
             }
         });
     </script>
-
 </body>
-
 </html>
