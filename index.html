@@ -60,7 +60,7 @@
             height: 70vw;
             background: var(--accent-color);
             border-radius: 50%;
-            animation: move-1 10s infinite alternate ease-in-out;
+            animation: move-1 35s infinite alternate ease-in-out;
             left: -20%;
             top: -20%;
             opacity: 0.5;
@@ -72,7 +72,7 @@
             height: 60vw;
             right: -20%;
             bottom: -10%;
-            animation: move-2 10s infinite alternate ease-in-out;
+            animation: move-2 45s infinite alternate ease-in-out;
             opacity: 0.4;
         }
 
@@ -82,7 +82,7 @@
             height: 50vw;
             left: 40%;
             top: -10%;
-            animation: move-3 10s infinite alternate ease-in-out;
+            animation: move-3 30s infinite alternate ease-in-out;
             opacity: 0.3;
         }
 
@@ -236,6 +236,7 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
+            min-width: 0; /* Prevent panel from overflowing container */
         }
 
         .right-panel {
@@ -244,6 +245,7 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
+            min-width: 0; /* Allow panel to shrink and handle text ellipsis */
             position: sticky;
             top: 100px;
             gap: 24px;
