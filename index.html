@@ -667,8 +667,8 @@
         <div class="left-panel">
             <div class="video-container" id="videoContainer">
                 <div id="player"></div>
-                <div id="micStatus" class="mic-status" onclick="toggleVisualizer()">
-                    <span>🎤</span> <span id="micText">Mic Visualizer: Off</span>
+                <div id="audioStatus" class="mic-status" onclick="toggleVisualizer()">
+                    <span>🎙️</span> <span id="audioText">Hybrid Audio: Off</span>
                 </div>
                 <div class="visualizer-overlay">
                     <canvas id="visualizerCanvas"></canvas>
@@ -1040,51 +1040,72 @@
         }
 
         // =========================================================================
-        // 🎙️ HYBRID REACTIVE VISUALIZER LOGIC
+        // 🎙️ HYBRID REACTIVE VISUALIZER LOGIC (Mic + System/Tab Audio)
         // =========================================================================
         let audioContext;
         let analyser;
         let dataArray;
         let micStream;
+        let systemStream;
         let visualizerInitialized = false;
         let simTime = 0;
 
         async function toggleVisualizer() {
-            const statusEl = document.getElementById('micStatus');
-            const textEl = document.getElementById('micText');
+            const statusEl = document.getElementById('audioStatus');
+            const textEl = document.getElementById('audioText');
 
             if (visualizerInitialized) {
-                // TURN OFF: Stop mic tracks and revert to simulation
-                if (micStream) {
-                    micStream.getTracks().forEach(track => track.stop());
-                }
+                if (micStream) micStream.getTracks().forEach(track => track.stop());
+                if (systemStream) systemStream.getTracks().forEach(track => track.stop());
                 visualizerInitialized = false;
                 statusEl.classList.remove('active');
-                textEl.innerText = "Mic Visualizer: Off";
+                textEl.innerText = "Hybrid Audio: Off";
                 return;
             }
 
-            // TURN ON: Request mic and start live mode
             try {
+                // 1. Request Microphone
                 micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // 2. Request System/Tab Audio
+                systemStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { width: 1, height: 1 },
+                    audio: true
+                });
+
                 if (!audioContext) {
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 }
                 
-                const source = audioContext.createMediaStreamSource(micStream);
                 analyser = audioContext.createAnalyser();
-                analyser.fftSize = 64; 
+                analyser.fftSize = 64;
+                
+                // Create sources for both streams
+                const micSource = audioContext.createMediaStreamSource(micStream);
+                const systemSource = audioContext.createMediaStreamSource(systemStream);
+                
+                // Merge sources into the same analyser
+                micSource.connect(analyser);
+                systemSource.connect(analyser);
                 
                 const bufferLength = analyser.frequencyBinCount;
                 dataArray = new Uint8Array(bufferLength);
-                source.connect(analyser);
                 
                 visualizerInitialized = true;
                 statusEl.classList.add('active');
-                textEl.innerText = "Mic Visualizer: Live";
+                textEl.innerText = "Hybrid: Mic + Music";
+
+                // Stop the video track from systemStream as we only need audio
+                systemStream.getVideoTracks().forEach(track => track.stop());
+                
             } catch (err) {
-                console.error("Microphone access denied:", err);
-                alert("Please allow microphone access for Live Mode!");
+                console.error("Audio access denied:", err);
+                alert("Hybrid Mode requires both Mic and System Audio access. Please allow both and ensure 'Share Audio' is checked!");
+                
+                // Cleanup if one was allowed but not the other
+                if (micStream) micStream.getTracks().forEach(track => track.stop());
+                if (systemStream) systemStream.getTracks().forEach(track => track.stop());
+                visualizerInitialized = false;
             }
         }
 
