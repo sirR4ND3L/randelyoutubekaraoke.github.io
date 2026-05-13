@@ -60,7 +60,7 @@
             height: 70vw;
             background: var(--accent-color);
             border-radius: 50%;
-            animation: move-1 35s infinite alternate ease-in-out;
+            animation: move-1 5s infinite alternate ease-in-out;
             left: -20%;
             top: -20%;
             opacity: 0.5;
@@ -72,7 +72,7 @@
             height: 60vw;
             right: -20%;
             bottom: -10%;
-            animation: move-2 45s infinite alternate ease-in-out;
+            animation: move-2 5s infinite alternate ease-in-out;
             opacity: 0.4;
         }
 
@@ -82,7 +82,7 @@
             height: 50vw;
             left: 40%;
             top: -10%;
-            animation: move-3 30s infinite alternate ease-in-out;
+            animation: move-3 5s infinite alternate ease-in-out;
             opacity: 0.3;
         }
 
@@ -1192,8 +1192,8 @@
 
         // Scoring Variables
         let currentScore = 0;
-        let totalSingingTime = 0;
-        let scoreTrackingActive = false;
+        let earnedPoints = 0;
+        let possiblePoints = 0;
         let scoringInterval;
 
         async function toggleVisualizer() {
@@ -1281,7 +1281,7 @@
             micAnalyser.getByteFrequencyData(micDataArray);
             systemAnalyser.getByteFrequencyData(systemDataArray);
 
-            // Calculate Energy (RMS-like)
+            // Calculate Energy
             let micEnergy = 0;
             for (let i = 0; i < micDataArray.length; i++) micEnergy += micDataArray[i];
             micEnergy /= micDataArray.length;
@@ -1290,22 +1290,28 @@
             for (let i = 0; i < systemDataArray.length; i++) systemEnergy += systemDataArray[i];
             systemEnergy /= systemDataArray.length;
 
-            // SCORING HEURISTIC:
-            // 1. Minimum energy threshold to detect "singing"
-            if (micEnergy > 30) {
-                // 2. Points based on vocal intensity (max 0.5 per tick)
-                let tickScore = Math.min(micEnergy / 150, 0.5);
-                
-                // 3. Rhythm Bonus: If mic energy matches music energy trends (simplified)
-                if (systemEnergy > 50 && micEnergy > 60) {
-                    tickScore += 0.2;
-                }
+            // INCREMENT POSSIBLE POINTS (The "Perfect" baseline)
+            possiblePoints += 1.0;
 
-                currentScore += tickScore;
-                totalSingingTime += 0.2;
+            // CALCULATE EARNED POINTS (The "User" performance)
+            if (micEnergy > 30) {
+                // Base score for singing (accuracy relative to volume)
+                let tickEarned = Math.min(micEnergy / 180, 0.8);
+                
+                // Rhythm matching bonus
+                if (systemEnergy > 40 && Math.abs(micEnergy - systemEnergy) < 40) {
+                    tickEarned += 0.2;
+                }
+                
+                earnedPoints += tickEarned;
             }
 
-            // Cap display score at 100 for live meter
+            // FINAL CALCULATION: Percentage of perfection
+            if (possiblePoints > 0) {
+                currentScore = (earnedPoints / possiblePoints) * 100;
+            }
+
+            // UI Update
             const displayScore = Math.min(Math.floor(currentScore), 100);
             document.getElementById('scoreBarFill').style.width = displayScore + "%";
             document.getElementById('liveScoreValue').innerText = displayScore;
@@ -1371,7 +1377,8 @@
 
         function resetScore() {
             currentScore = 0;
-            totalSingingTime = 0;
+            earnedPoints = 0;
+            possiblePoints = 0;
             document.getElementById('scoreBarFill').style.width = "0%";
             document.getElementById('liveScoreValue').innerText = "0";
         }
