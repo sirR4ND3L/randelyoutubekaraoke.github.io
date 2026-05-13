@@ -838,7 +838,7 @@
                     <p class="score-message" id="finalMessage">Incredible performance!</p>
                     <div class="score-actions">
                         <button class="primary" onclick="closeScore()">Continue</button>
-                        <button onclick="restartVideo(); closeScore()">Sing Again</button>
+                        <button onclick="restartVideo()">Sing Again</button>
                     </div>
                 </div>
 
@@ -1067,9 +1067,21 @@
         }
 
         function restartVideo() {
+            if (scoreAudio) {
+                scoreAudio.pause();
+                scoreAudio = null;
+            }
+            document.getElementById('scoreOverlay').classList.remove('active');
+            
+            let videoData = player.getVideoData();
+            if (videoData && videoData.title) {
+                setNowPlaying(videoData.title);
+            }
+            
             resetScore();
             player.seekTo(0);
             player.playVideo();
+            if (visualizerInitialized) startScoring();
         }
 
         function changeVolume(val) {
@@ -1421,45 +1433,59 @@
             playScoreSound(rank);
 
 
-            // Auto-continue to next song synced with the score sound
-            if (songQueue.length > 0) {
-                if (scoreAudio) {
+            // Auto-close synced with the score sound
+            if (scoreAudio) {
+                if (songQueue.length > 0) {
                     msgEl.innerText = "Waiting for sound...";
-                    
-                    // Update countdown as sound plays
-                    scoreAudio.addEventListener('timeupdate', () => {
-                        if (overlay.classList.contains('active') && !isNaN(scoreAudio.duration)) {
-                            const remaining = Math.ceil(scoreAudio.duration - scoreAudio.currentTime);
-                            msgEl.innerText = `Next song in ${remaining}s...`;
-                        }
-                    });
-
-                    // Start next song when sound finishes
-                    scoreAudio.addEventListener('ended', () => {
-                        if (overlay.classList.contains('active')) {
-                            closeScore();
-                        }
-                    });
-
-                    // Fallback in case audio is blocked by browser policy
-                    scoreAudio.addEventListener('error', startFallbackTimer);
                 } else {
-                    startFallbackTimer();
+                    msgEl.innerText = "Done! Select a new song or wait...";
                 }
-
-                function startFallbackTimer() {
-                    let secondsLeft = 15;
-                    msgEl.innerText = `Next song in ${secondsLeft}s...`;
-                    const timer = setInterval(() => {
-                        secondsLeft--;
-                        if (secondsLeft <= 0 || !overlay.classList.contains('active')) {
-                            clearInterval(timer);
-                            if (overlay.classList.contains('active')) closeScore();
+                
+                // Update countdown as sound plays
+                scoreAudio.addEventListener('timeupdate', () => {
+                    if (overlay.classList.contains('active') && !isNaN(scoreAudio.duration)) {
+                        const remaining = Math.ceil(scoreAudio.duration - scoreAudio.currentTime);
+                        if (songQueue.length > 0) {
+                            msgEl.innerText = `Next song in ${remaining}s...`;
                         } else {
-                            msgEl.innerText = `Next song in ${secondsLeft}s...`;
+                            msgEl.innerText = `Closing in ${remaining}s...`;
                         }
-                    }, 1000);
+                    }
+                });
+
+                // Close overlay when sound finishes
+                scoreAudio.addEventListener('ended', () => {
+                    if (overlay.classList.contains('active')) {
+                        closeScore();
+                    }
+                });
+
+                // Fallback in case audio is blocked by browser policy
+                scoreAudio.addEventListener('error', startFallbackTimer);
+            } else {
+                startFallbackTimer();
+            }
+
+            function startFallbackTimer() {
+                let secondsLeft = 15;
+                if (songQueue.length > 0) {
+                    msgEl.innerText = `Next song in ${secondsLeft}s...`;
+                } else {
+                    msgEl.innerText = `Closing in ${secondsLeft}s...`;
                 }
+                const timer = setInterval(() => {
+                    secondsLeft--;
+                    if (secondsLeft <= 0 || !overlay.classList.contains('active')) {
+                        clearInterval(timer);
+                        if (overlay.classList.contains('active')) closeScore();
+                    } else {
+                        if (songQueue.length > 0) {
+                            msgEl.innerText = `Next song in ${secondsLeft}s...`;
+                        } else {
+                            msgEl.innerText = `Closing in ${secondsLeft}s...`;
+                        }
+                    }
+                }, 1000);
             }
         }
 
