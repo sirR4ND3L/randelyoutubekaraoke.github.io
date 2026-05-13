@@ -10,7 +10,9 @@ A premium, modern web-based Karaoke player designed with a sleek **Glassmorphism
 - **💎 Premium Glass UI:** Sophisticated glassmorphism design with blur effects, interactive shimmers, and smooth floating animations.
 - **🏝️ Dynamic Island Header:** A smart, sticky header that reacts to playback states and displays "Now Playing" information.
 - **🎙️ Hybrid Visualizer:** Real-time microphone audio visualization for singers, with an automatic "Simulation Mode" to keep the UI dynamic even when the mic is off.
-- **📋 Smart Queue System:** Add and manage songs with a beautiful "Up Next" card interface. Consists of an automatic sequential playback system.
+- **💯 Performance Scoring System:** Evaluates vocal energy and rhythm matching. Includes a live floating score badge and a final overlay showing your rank (Legendary, Rockstar, etc.).
+- **🎉 Custom Score Sounds:** Plays celebration or feedback sounds (`scoreSound.mp3`) when a song ends.
+- **📋 Smart Queue System:** Add and manage songs with a beautiful "Up Next" card interface. The queue seamlessly auto-plays the next song the moment your score sound finishes.
 - **🔍 Robust Search:** Integrated YouTube search with multiple fallback proxies (Invidious, AllOrigins) to ensure reliability and bypass CORS restrictions.
 - **⌨️ Power-User Shortcuts:** 
   - `Z` - Play
