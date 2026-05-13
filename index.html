@@ -908,6 +908,15 @@
         var player;
         var songQueue = [];
 
+        // 🎵 CUSTOM SOUND CONFIGURATION
+        // To use your own sounds, put the files in the same folder as this HTML file
+        // and change the names below (e.g., "my_cheer.mp3")
+        const SOUND_EFFECTS = {
+            CHEER: "soundScore.mp3",
+            SUCCESS: "soundScore.mp3",
+            FAIL: "soundScore.mp3"
+        };
+
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
                 height: '100%',
@@ -1376,23 +1385,29 @@
 
             scoreEl.innerText = score;
             
+            let rank = "";
             if (score >= 95) {
+                rank = "legendary";
                 rankEl.innerText = "Legendary";
                 rankEl.style.color = "#ffcc00";
                 msgEl.innerText = "Absolute masterpiece! You're a star!";
             } else if (score >= 85) {
+                rank = "rockstar";
                 rankEl.innerText = "Rockstar";
                 rankEl.style.color = "#007aff";
                 msgEl.innerText = "Incredible performance! The crowd loves you!";
             } else if (score >= 70) {
+                rank = "pro";
                 rankEl.innerText = "Pro";
                 rankEl.style.color = "#4cd964";
                 msgEl.innerText = "Great job! Your timing was excellent.";
             } else if (score >= 40) {
+                rank = "amateur";
                 rankEl.innerText = "Amateur";
                 rankEl.style.color = "#ff9500";
                 msgEl.innerText = "Not bad! Keep practicing to hit those high notes.";
             } else {
+                rank = "beginner";
                 rankEl.innerText = "Beginner";
                 rankEl.style.color = "#ff3b30";
                 msgEl.innerText = "Nice try! Sing louder and stay with the beat.";
@@ -1400,6 +1415,7 @@
 
             overlay.classList.add('active');
             stopScoring();
+            playScoreSound(rank);
 
             // Auto-continue to next song after 10 seconds if queue isn't empty
             if (songQueue.length > 0) {
@@ -1415,6 +1431,26 @@
                     }
                 }, 500);
             }
+        }
+
+        function playScoreSound(rank) {
+            let soundUrl = "";
+            switch(rank) {
+                case 'legendary':
+                case 'rockstar':
+                    soundUrl = SOUND_EFFECTS.CHEER;
+                    break;
+                case 'pro':
+                case 'amateur':
+                    soundUrl = SOUND_EFFECTS.SUCCESS;
+                    break;
+                default:
+                    soundUrl = SOUND_EFFECTS.FAIL;
+            }
+            
+            const audio = new Audio(soundUrl);
+            audio.volume = 0.5;
+            audio.play().catch(e => console.log("Sound blocked by browser policy until user interacts."));
         }
 
         function closeScore() {
