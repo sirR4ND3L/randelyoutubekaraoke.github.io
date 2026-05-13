@@ -1421,9 +1421,9 @@
             playScoreSound(rank);
 
 
-            // Auto-continue to next song after 15 seconds if queue isn't empty
+            // Auto-continue to next song after 19 seconds if queue isn't empty
             if (songQueue.length > 0) {
-                let secondsLeft = 15;
+                let secondsLeft = 19;
                 msgEl.innerText = `Next song in ${secondsLeft}s...`;
                 const timer = setInterval(() => {
                     secondsLeft--;
