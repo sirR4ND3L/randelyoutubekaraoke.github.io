@@ -60,7 +60,7 @@
             height: 70vw;
             background: var(--accent-color);
             border-radius: 50%;
-            animation: move-1 5s infinite alternate ease-in-out;
+            animation: move-1 35s infinite alternate ease-in-out;
             left: -20%;
             top: -20%;
             opacity: 0.5;
@@ -72,7 +72,7 @@
             height: 60vw;
             right: -20%;
             bottom: -10%;
-            animation: move-2 5s infinite alternate ease-in-out;
+            animation: move-2 45s infinite alternate ease-in-out;
             opacity: 0.4;
         }
 
@@ -82,7 +82,7 @@
             height: 50vw;
             left: 40%;
             top: -10%;
-            animation: move-3 5s infinite alternate ease-in-out;
+            animation: move-3 30s infinite alternate ease-in-out;
             opacity: 0.3;
         }
 
@@ -1248,6 +1248,8 @@
         let earnedPoints = 0;
         let possiblePoints = 0;
         let scoringInterval;
+        let isScoreRevealed = false; // Flag to prevent duplicate triggers
+        let scoreAudio = null;       // Global reference to stop sound
 
         async function toggleVisualizer() {
             const statusEl = document.getElementById('audioStatus');
@@ -1375,7 +1377,8 @@
         }
 
         function showFinalScore() {
-            if (!visualizerInitialized) return;
+            if (!visualizerInitialized || isScoreRevealed) return;
+            isScoreRevealed = true; // Mark as revealed immediately
 
             const score = Math.min(Math.floor(currentScore), 100);
             const overlay = document.getElementById('scoreOverlay');
@@ -1417,6 +1420,7 @@
             stopScoring();
             playScoreSound(rank);
 
+
             // Auto-continue to next song after 10 seconds if queue isn't empty
             if (songQueue.length > 0) {
                 let secondsLeft = 10;
@@ -1434,6 +1438,12 @@
         }
 
         function playScoreSound(rank) {
+            // Stop any previous sound first
+            if (scoreAudio) {
+                scoreAudio.pause();
+                scoreAudio = null;
+            }
+
             let soundUrl = "";
             switch(rank) {
                 case 'legendary':
@@ -1448,12 +1458,17 @@
                     soundUrl = SOUND_EFFECTS.FAIL;
             }
             
-            const audio = new Audio(soundUrl);
-            audio.volume = 0.5;
-            audio.play().catch(e => console.log("Sound blocked by browser policy until user interacts."));
+            scoreAudio = new Audio(soundUrl);
+            scoreAudio.volume = 0.5;
+            scoreAudio.play().catch(e => console.log("Sound blocked by browser policy until user interacts."));
         }
 
         function closeScore() {
+            // Stop the sound when closing the overlay
+            if (scoreAudio) {
+                scoreAudio.pause();
+                scoreAudio = null;
+            }
             document.getElementById('scoreOverlay').classList.remove('active');
             playNextInQueue();
             if (visualizerInitialized) startScoring();
@@ -1463,6 +1478,7 @@
             currentScore = 0;
             earnedPoints = 0;
             possiblePoints = 0;
+            isScoreRevealed = false; // Reset the flag for the next song
             document.getElementById('scoreBarFill').style.width = "0%";
             document.getElementById('liveScoreValue').innerText = "0";
             document.getElementById('liveScorePlayer').innerText = "0";
