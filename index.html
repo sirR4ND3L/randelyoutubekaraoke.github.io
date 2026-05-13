@@ -60,7 +60,7 @@
             height: 70vw;
             background: var(--accent-color);
             border-radius: 50%;
-            animation: move-1 5s infinite alternate ease-in-out;
+            animation: move-1 35s infinite alternate ease-in-out;
             left: -20%;
             top: -20%;
             opacity: 0.5;
@@ -72,7 +72,7 @@
             height: 60vw;
             right: -20%;
             bottom: -10%;
-            animation: move-2 5s infinite alternate ease-in-out;
+            animation: move-2 45s infinite alternate ease-in-out;
             opacity: 0.4;
         }
 
@@ -82,7 +82,7 @@
             height: 50vw;
             left: 40%;
             top: -10%;
-            animation: move-3 5s infinite alternate ease-in-out;
+            animation: move-3 30s infinite alternate ease-in-out;
             opacity: 0.3;
         }
 
@@ -657,6 +657,103 @@
             box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4);
             font-size: 11px;
         }
+
+        .score-meter-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 10px;
+            padding-left: 10px;
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .score-bar-bg {
+            width: 60px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        #scoreBarFill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #007aff, #00ffcc);
+            transition: width 0.3s ease;
+        }
+
+        #liveScoreValue {
+            font-size: 11px;
+            font-weight: 700;
+            color: #00ffcc;
+            min-width: 25px;
+        }
+
+        /* Score Overlay */
+        .score-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition-smooth);
+            text-align: center;
+            padding: 40px;
+        }
+
+        .score-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .score-rank {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .score-number {
+            font-size: 120px;
+            font-weight: 800;
+            line-height: 1;
+            margin: 10px 0;
+            background: linear-gradient(180deg, #fff 30%, var(--accent-color) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 30px rgba(0, 122, 255, 0.4));
+            transform: scale(0.8);
+            transition: all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .score-overlay.active .score-rank,
+        .score-overlay.active .score-number {
+            transform: translateY(0) scale(1);
+        }
+
+        .score-message {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .score-actions {
+            display: flex;
+            gap: 16px;
+        }
     </style>
 </head>
 
@@ -671,6 +768,12 @@
     <div class="header-container">
         <div id="dynamicIsland" class="dynamic-island">
             <h2 id="nowPlaying">Ready to Sing</h2>
+            <div class="score-meter-container" id="scoreMeter" style="display: none;">
+                <div class="score-bar-bg">
+                    <div id="scoreBarFill"></div>
+                </div>
+                <span id="liveScoreValue">0</span>
+            </div>
         </div>
     </div>
 
@@ -684,6 +787,17 @@
         <div class="left-panel">
             <div class="video-container" id="videoContainer">
                 <div id="player"></div>
+                
+                <div id="scoreOverlay" class="score-overlay">
+                    <div class="score-rank" id="finalRank">Rockstar</div>
+                    <div class="score-number" id="finalScore">85</div>
+                    <p class="score-message" id="finalMessage">Incredible performance!</p>
+                    <div class="score-actions">
+                        <button class="primary" onclick="closeScore()">Continue</button>
+                        <button onclick="restartVideo(); closeScore()">Sing Again</button>
+                    </div>
+                </div>
+
                 <div id="audioStatus" class="mic-status" onclick="toggleVisualizer()">
                     <span>🎙️</span> <span id="audioText">Hybrid Audio: Off</span>
                 </div>
@@ -769,7 +883,11 @@
 
         function onPlayerStateChange(event) {
             if (event.data === YT.PlayerState.ENDED) {
-                playNextInQueue();
+                if (visualizerInitialized) {
+                    showFinalScore();
+                } else {
+                    playNextInQueue();
+                }
             }
         }
 
@@ -790,6 +908,7 @@
         }
 
         function playNextInQueue() {
+            resetScore();
             if (songQueue.length > 0) {
                 let nextSong = songQueue.shift();
                 player.loadVideoById(nextSong.id);
@@ -867,6 +986,7 @@
             let thumbUrl = thumbnail || `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
 
             if (playNow) {
+                resetScore();
                 player.loadVideoById(id);
                 setNowPlaying(songName);
             } else {
@@ -894,6 +1014,7 @@
         }
 
         function restartVideo() {
+            resetScore();
             player.seekTo(0);
             player.playVideo();
         }
@@ -1060,23 +1181,34 @@
         // 🎙️ HYBRID REACTIVE VISUALIZER LOGIC (Mic + System/Tab Audio)
         // =========================================================================
         let audioContext;
-        let analyser;
-        let dataArray;
+        let micAnalyser;
+        let systemAnalyser;
+        let micDataArray;
+        let systemDataArray;
         let micStream;
         let systemStream;
         let visualizerInitialized = false;
         let simTime = 0;
 
+        // Scoring Variables
+        let currentScore = 0;
+        let totalSingingTime = 0;
+        let scoreTrackingActive = false;
+        let scoringInterval;
+
         async function toggleVisualizer() {
             const statusEl = document.getElementById('audioStatus');
             const textEl = document.getElementById('audioText');
+            const scoreMeter = document.getElementById('scoreMeter');
 
             if (visualizerInitialized) {
+                stopScoring();
                 if (micStream) micStream.getTracks().forEach(track => track.stop());
                 if (systemStream) systemStream.getTracks().forEach(track => track.stop());
                 visualizerInitialized = false;
                 statusEl.classList.remove('active');
                 textEl.innerText = "Hybrid Audio: Off";
+                scoreMeter.style.display = "none";
                 return;
             }
 
@@ -1094,36 +1226,154 @@
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 }
                 
-                analyser = audioContext.createAnalyser();
-                analyser.fftSize = 64;
+                micAnalyser = audioContext.createAnalyser();
+                micAnalyser.fftSize = 64;
                 
-                // Create sources for both streams
+                systemAnalyser = audioContext.createAnalyser();
+                systemAnalyser.fftSize = 64;
+                
+                // Create sources
                 const micSource = audioContext.createMediaStreamSource(micStream);
                 const systemSource = audioContext.createMediaStreamSource(systemStream);
                 
-                // Merge sources into the same analyser
-                micSource.connect(analyser);
-                systemSource.connect(analyser);
+                micSource.connect(micAnalyser);
+                systemSource.connect(systemAnalyser);
                 
-                const bufferLength = analyser.frequencyBinCount;
-                dataArray = new Uint8Array(bufferLength);
+                micDataArray = new Uint8Array(micAnalyser.frequencyBinCount);
+                systemDataArray = new Uint8Array(systemAnalyser.frequencyBinCount);
                 
                 visualizerInitialized = true;
                 statusEl.classList.add('active');
-                textEl.innerText = "Hybrid: Mic + Music";
+                textEl.innerText = "Hybrid: Scoring Active";
+                scoreMeter.style.display = "flex";
 
-                // Stop the video track from systemStream as we only need audio
+                // Stop the video track from systemStream
                 systemStream.getVideoTracks().forEach(track => track.stop());
+                
+                startScoring();
                 
             } catch (err) {
                 console.error("Audio access denied:", err);
-                alert("Hybrid Mode requires both Mic and System Audio access. Please allow both and ensure 'Share Audio' is checked!");
+                alert("Scoring requires both Mic and System Audio access. Please allow both and ensure 'Share Audio' is checked!");
                 
-                // Cleanup if one was allowed but not the other
                 if (micStream) micStream.getTracks().forEach(track => track.stop());
                 if (systemStream) systemStream.getTracks().forEach(track => track.stop());
                 visualizerInitialized = false;
             }
+        }
+
+        function startScoring() {
+            if (scoringInterval) clearInterval(scoringInterval);
+            scoringInterval = setInterval(updateScore, 200);
+        }
+
+        function stopScoring() {
+            if (scoringInterval) clearInterval(scoringInterval);
+            scoringInterval = null;
+        }
+
+        function updateScore() {
+            if (!visualizerInitialized || !micAnalyser || !systemAnalyser) return;
+            
+            const isPlaying = player && player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING;
+            if (!isPlaying) return;
+
+            micAnalyser.getByteFrequencyData(micDataArray);
+            systemAnalyser.getByteFrequencyData(systemDataArray);
+
+            // Calculate Energy (RMS-like)
+            let micEnergy = 0;
+            for (let i = 0; i < micDataArray.length; i++) micEnergy += micDataArray[i];
+            micEnergy /= micDataArray.length;
+
+            let systemEnergy = 0;
+            for (let i = 0; i < systemDataArray.length; i++) systemEnergy += systemDataArray[i];
+            systemEnergy /= systemDataArray.length;
+
+            // SCORING HEURISTIC:
+            // 1. Minimum energy threshold to detect "singing"
+            if (micEnergy > 30) {
+                // 2. Points based on vocal intensity (max 0.5 per tick)
+                let tickScore = Math.min(micEnergy / 150, 0.5);
+                
+                // 3. Rhythm Bonus: If mic energy matches music energy trends (simplified)
+                if (systemEnergy > 50 && micEnergy > 60) {
+                    tickScore += 0.2;
+                }
+
+                currentScore += tickScore;
+                totalSingingTime += 0.2;
+            }
+
+            // Cap display score at 100 for live meter
+            const displayScore = Math.min(Math.floor(currentScore), 100);
+            document.getElementById('scoreBarFill').style.width = displayScore + "%";
+            document.getElementById('liveScoreValue').innerText = displayScore;
+        }
+
+        function showFinalScore() {
+            if (!visualizerInitialized) return;
+
+            const score = Math.min(Math.floor(currentScore), 100);
+            const overlay = document.getElementById('scoreOverlay');
+            const scoreEl = document.getElementById('finalScore');
+            const rankEl = document.getElementById('finalRank');
+            const msgEl = document.getElementById('finalMessage');
+
+            scoreEl.innerText = score;
+            
+            if (score >= 95) {
+                rankEl.innerText = "Legendary";
+                rankEl.style.color = "#ffcc00";
+                msgEl.innerText = "Absolute masterpiece! You're a star!";
+            } else if (score >= 85) {
+                rankEl.innerText = "Rockstar";
+                rankEl.style.color = "#007aff";
+                msgEl.innerText = "Incredible performance! The crowd loves you!";
+            } else if (score >= 70) {
+                rankEl.innerText = "Pro";
+                rankEl.style.color = "#4cd964";
+                msgEl.innerText = "Great job! Your timing was excellent.";
+            } else if (score >= 40) {
+                rankEl.innerText = "Amateur";
+                rankEl.style.color = "#ff9500";
+                msgEl.innerText = "Not bad! Keep practicing to hit those high notes.";
+            } else {
+                rankEl.innerText = "Beginner";
+                rankEl.style.color = "#ff3b30";
+                msgEl.innerText = "Nice try! Sing louder and stay with the beat.";
+            }
+
+            overlay.classList.add('active');
+            stopScoring();
+
+            // Auto-continue to next song after 10 seconds if queue isn't empty
+            if (songQueue.length > 0) {
+                let secondsLeft = 10;
+                msgEl.innerText = `Next song in ${secondsLeft}s...`;
+                const timer = setInterval(() => {
+                    secondsLeft--;
+                    if (secondsLeft <= 0 || !overlay.classList.contains('active')) {
+                        clearInterval(timer);
+                        if (overlay.classList.contains('active')) closeScore();
+                    } else {
+                        msgEl.innerText = `Next song in ${secondsLeft}s...`;
+                    }
+                }, 500);
+            }
+        }
+
+        function closeScore() {
+            document.getElementById('scoreOverlay').classList.remove('active');
+            playNextInQueue();
+            if (visualizerInitialized) startScoring();
+        }
+
+        function resetScore() {
+            currentScore = 0;
+            totalSingingTime = 0;
+            document.getElementById('scoreBarFill').style.width = "0%";
+            document.getElementById('liveScoreValue').innerText = "0";
         }
 
         function drawVisualizer() {
@@ -1133,8 +1383,8 @@
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
 
-            // Pre-fill dataArray for simulation if not yet initialized
-            if (!dataArray) dataArray = new Uint8Array(32);
+            // Pre-fill if not yet initialized
+            if (!systemDataArray) systemDataArray = new Uint8Array(32);
 
             function render() {
                 requestAnimationFrame(render);
@@ -1142,35 +1392,30 @@
                 
                 const isPlaying = player && player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING;
                 
-                if (visualizerInitialized && analyser) {
-                    analyser.getByteFrequencyData(dataArray);
+                if (visualizerInitialized && systemAnalyser) {
+                    systemAnalyser.getByteFrequencyData(systemDataArray);
                 } else {
-                    // SIMULATION MODE: Create rhythmic wave patterns
-                    for (let i = 0; i < dataArray.length; i++) {
+                    // SIMULATION MODE
+                    for (let i = 0; i < systemDataArray.length; i++) {
                         if (isPlaying) {
-                            // Rhythmic pulse
                             const wave = Math.sin(simTime + i * 0.3) * 0.5 + 0.5;
-                            const noise = Math.random() * 0.2;
-                            dataArray[i] = (wave + noise) * 150;
+                            systemDataArray[i] = (wave + Math.random() * 0.2) * 150;
                         } else {
-                            // Slow resting pulse
-                            dataArray[i] = (Math.sin(simTime * 0.5 + i * 0.1) * 0.5 + 0.5) * 40;
+                            systemDataArray[i] = (Math.sin(simTime * 0.5 + i * 0.1) * 0.5 + 0.5) * 40;
                         }
                     }
                 }
                 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                const barWidth = (canvas.width / dataArray.length) * 0.8;
+                const barWidth = (canvas.width / systemDataArray.length) * 0.8;
                 let x = 0;
                 
-                for (let i = 0; i < dataArray.length; i++) {
-                    let barHeight = (dataArray[i] / 255) * canvas.height;
-                    
+                for (let i = 0; i < systemDataArray.length; i++) {
+                    let barHeight = (systemDataArray[i] / 255) * canvas.height;
                     if (!isPlaying && visualizerInitialized) barHeight *= 0.1;
 
                     const gradient = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
-                    // Live mode is blue, Simulation is a softer Cyan/Azure
                     if (visualizerInitialized) {
                         gradient.addColorStop(0, 'rgba(0, 122, 255, 0.9)');
                         gradient.addColorStop(1, 'rgba(0, 200, 255, 0.5)');
@@ -1180,9 +1425,8 @@
                     }
                     
                     ctx.fillStyle = gradient;
-                    
                     const radius = barWidth / 2;
-                    const barX = x + (canvas.width / dataArray.length - barWidth) / 2;
+                    const barX = x + (canvas.width / systemDataArray.length - barWidth) / 2;
                     const barY = canvas.height - barHeight;
                     
                     if (barHeight > 1) {
@@ -1190,8 +1434,7 @@
                         ctx.roundRect(barX, barY, barWidth, barHeight, [radius, radius, 0, 0]);
                         ctx.fill();
                     }
-                    
-                    x += canvas.width / dataArray.length;
+                    x += canvas.width / systemDataArray.length;
                 }
             }
             render();
@@ -1219,6 +1462,7 @@
         }
 
         function cancelCurrentSong() {
+            resetScore();
             if (songQueue.length > 0) {
                 playNextInQueue();
             } else {
