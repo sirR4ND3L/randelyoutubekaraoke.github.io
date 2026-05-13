@@ -60,7 +60,7 @@
             height: 70vw;
             background: var(--accent-color);
             border-radius: 50%;
-            animation: move-1 5s infinite alternate ease-in-out;
+            animation: move-1 35s infinite alternate ease-in-out;
             left: -20%;
             top: -20%;
             opacity: 0.5;
@@ -72,7 +72,7 @@
             height: 60vw;
             right: -20%;
             bottom: -10%;
-            animation: move-2 5s infinite alternate ease-in-out;
+            animation: move-2 45s infinite alternate ease-in-out;
             opacity: 0.4;
         }
 
@@ -82,7 +82,7 @@
             height: 50vw;
             left: 40%;
             top: -10%;
-            animation: move-3 5s infinite alternate ease-in-out;
+            animation: move-3 30s infinite alternate ease-in-out;
             opacity: 0.3;
         }
 
@@ -658,6 +658,45 @@
             font-size: 11px;
         }
 
+        /* Floating Live Score */
+        .live-score-badge {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            padding: 8px 16px;
+            border-radius: 16px;
+            z-index: 10;
+            display: none; /* Shown only when scoring is active */
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.15);
+            transition: var(--transition-smooth);
+            animation: scorePulse 2s infinite ease-in-out;
+        }
+
+        @keyframes scorePulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(0, 255, 204, 0.15); }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(0, 255, 204, 0.3); }
+        }
+
+        .live-score-badge .label {
+            font-size: 10px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .live-score-badge .value {
+            font-size: 20px;
+            font-weight: 800;
+            color: #00ffcc;
+            font-variant-numeric: tabular-nums;
+        }
+
         .score-meter-container {
             display: flex;
             align-items: center;
@@ -788,6 +827,11 @@
             <div class="video-container" id="videoContainer">
                 <div id="player"></div>
                 
+                <div id="liveScoreBadge" class="live-score-badge">
+                    <span class="label">Score</span>
+                    <span class="value" id="liveScorePlayer">0</span>
+                </div>
+
                 <div id="scoreOverlay" class="score-overlay">
                     <div class="score-rank" id="finalRank">Rockstar</div>
                     <div class="score-number" id="finalScore">85</div>
@@ -1200,6 +1244,7 @@
             const statusEl = document.getElementById('audioStatus');
             const textEl = document.getElementById('audioText');
             const scoreMeter = document.getElementById('scoreMeter');
+            const liveBadge = document.getElementById('liveScoreBadge');
 
             if (visualizerInitialized) {
                 stopScoring();
@@ -1209,6 +1254,7 @@
                 statusEl.classList.remove('active');
                 textEl.innerText = "Hybrid Audio: Off";
                 scoreMeter.style.display = "none";
+                liveBadge.style.display = "none";
                 return;
             }
 
@@ -1246,6 +1292,7 @@
                 statusEl.classList.add('active');
                 textEl.innerText = "Hybrid: Scoring Active";
                 scoreMeter.style.display = "flex";
+                liveBadge.style.display = "flex";
 
                 // Stop the video track from systemStream
                 systemStream.getVideoTracks().forEach(track => track.stop());
@@ -1315,6 +1362,7 @@
             const displayScore = Math.min(Math.floor(currentScore), 100);
             document.getElementById('scoreBarFill').style.width = displayScore + "%";
             document.getElementById('liveScoreValue').innerText = displayScore;
+            document.getElementById('liveScorePlayer').innerText = displayScore;
         }
 
         function showFinalScore() {
@@ -1381,6 +1429,7 @@
             possiblePoints = 0;
             document.getElementById('scoreBarFill').style.width = "0%";
             document.getElementById('liveScoreValue').innerText = "0";
+            document.getElementById('liveScorePlayer').innerText = "0";
         }
 
         function drawVisualizer() {
@@ -1461,7 +1510,11 @@
 
                 if (duration) {
                     if (duration - currentTime <= 0.5 && player.getPlayerState() === YT.PlayerState.PLAYING) {
-                        playNextInQueue();
+                        if (visualizerInitialized) {
+                            showFinalScore();
+                        } else {
+                            playNextInQueue();
+                        }
                     }
                 }
 
