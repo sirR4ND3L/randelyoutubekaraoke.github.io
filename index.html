@@ -1421,19 +1421,45 @@
             playScoreSound(rank);
 
 
-            // Auto-continue to next song after 19 seconds if queue isn't empty
+            // Auto-continue to next song synced with the score sound
             if (songQueue.length > 0) {
-                let secondsLeft = 19;
-                msgEl.innerText = `Next song in ${secondsLeft}s...`;
-                const timer = setInterval(() => {
-                    secondsLeft--;
-                    if (secondsLeft <= 0 || !overlay.classList.contains('active')) {
-                        clearInterval(timer);
-                        if (overlay.classList.contains('active')) closeScore();
-                    } else {
-                        msgEl.innerText = `Next song in ${secondsLeft}s...`;
-                    }
-                }, 500);
+                if (scoreAudio) {
+                    msgEl.innerText = "Waiting for sound...";
+                    
+                    // Update countdown as sound plays
+                    scoreAudio.addEventListener('timeupdate', () => {
+                        if (overlay.classList.contains('active') && !isNaN(scoreAudio.duration)) {
+                            const remaining = Math.ceil(scoreAudio.duration - scoreAudio.currentTime);
+                            msgEl.innerText = `Next song in ${remaining}s...`;
+                        }
+                    });
+
+                    // Start next song when sound finishes
+                    scoreAudio.addEventListener('ended', () => {
+                        if (overlay.classList.contains('active')) {
+                            closeScore();
+                        }
+                    });
+
+                    // Fallback in case audio is blocked by browser policy
+                    scoreAudio.addEventListener('error', startFallbackTimer);
+                } else {
+                    startFallbackTimer();
+                }
+
+                function startFallbackTimer() {
+                    let secondsLeft = 15;
+                    msgEl.innerText = `Next song in ${secondsLeft}s...`;
+                    const timer = setInterval(() => {
+                        secondsLeft--;
+                        if (secondsLeft <= 0 || !overlay.classList.contains('active')) {
+                            clearInterval(timer);
+                            if (overlay.classList.contains('active')) closeScore();
+                        } else {
+                            msgEl.innerText = `Next song in ${secondsLeft}s...`;
+                        }
+                    }, 1000);
+                }
             }
         }
 
