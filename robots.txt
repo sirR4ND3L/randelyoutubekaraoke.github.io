@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sirr4nd3l.github.io/randelyoutubekaraoke.github.io/sitemap.xml
