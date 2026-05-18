@@ -20,19 +20,22 @@
     <meta property="og:url" content="https://sirr4nd3l.github.io/randelyoutubekaraoke.github.io/">
     <meta property="og:image" content="https://images.unsplash.com/photo-1516280440502-6c9fa5649969?auto=format&fit=crop&w=1200&q=80">
     
+    <!-- Fonts and Stylesheets -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="style.css">
-    <script>
-      // Load structured data dynamically for SEO
-      fetch('seo.jsonld')
-        .then(res => res.text())
-        .then(data => {
-          const script = document.createElement('script');
-          script.type = 'application/ld+json';
-          script.text = data;
-          document.head.appendChild(script);
-        })
-        .catch(err => console.error('Failed to load SEO data', err));
+    
+    <!-- Inline Structured Data (Guarantees Google reads your Schema instantly) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Randel Youtube Karaoke Player",
+      "url": "https://sirr4nd3l.github.io/randelyoutubekaraoke.github.io/",
+      "description": "A beautiful, interactive, and responsive web-based karaoke player using YouTube. Enjoy singing your favorite songs with real-time scoring and dynamic visualizer.",
+      "applicationCategory": "EntertainmentApplication",
+      "operatingSystem": "All"
+    }
     </script>
 </head>
 
@@ -90,9 +93,11 @@
                     </div>
                 </div>
 
-                <div id="audioStatus" class="mic-status" onclick="toggleVisualizer()" role="button" aria-label="Toggle Hybrid Audio Scoring" tabindex="0">
+                <!-- Turned into a semantic button for proper keyboard/accessibility support -->
+                <button id="audioStatus" class="mic-status" onclick="toggleVisualizer()" aria-label="Toggle Hybrid Audio Scoring">
                     <span aria-hidden="true">🎙️</span> <span id="audioText">Hybrid Audio: Off</span>
-                </div>
+                </button>
+
                 <div class="visualizer-overlay">
                     <canvas id="visualizerCanvas" aria-label="Audio visualizer canvas" role="img"></canvas>
                 </div>
@@ -145,11 +150,9 @@
                 </div>
             </div>
         </div>
-        <div style="display:none;" aria-hidden="true">
-          Free online karaoke player using YouTube. Sing songs, track performance, and enjoy real-time scoring.
-        </div>
     </div>
 
-    <script src="app.js" differ></script>
+    <!-- Fixed typo from 'differ' to 'defer' -->
+    <script src="app.js" defer></script>
 </body>
 </html>
