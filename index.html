@@ -8,31 +8,27 @@
     <meta name="google-site-verification" content="ePFt2UUkXFAh6d16SjqsElduTBudJ0phfoU3h4g8a28" />
     <link rel="canonical" href="https://sirr4nd3l.github.io/randelyoutubekaraoke.github.io/">
     
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="Randel Youtube Karaoke Player - A beautiful, interactive, and responsive web-based karaoke player using YouTube. Enjoy singing your favorite songs with real-time scoring and dynamic visualizer.">
+    <meta name="description" content="Randel Youtube Karaoke Player - A beautiful, interactive, and responsive web-based karaoke player using YouTube. Enjoy singing your favorite songs with real-time scoring.">
     <meta name="author" content="Randel">
     <meta name="robots" content="index, follow">
     
-    <!-- Open Graph / Social Media Meta Tags -->
     <meta property="og:title" content="Randel Youtube Karaoke Player">
     <meta property="og:description" content="A beautiful, interactive, and responsive web-based karaoke player using YouTube. Enjoy singing your favorite songs!">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://sirr4nd3l.github.io/randelyoutubekaraoke.github.io/">
     <meta property="og:image" content="https://images.unsplash.com/photo-1516280440502-6c9fa5649969?auto=format&fit=crop&w=1200&q=80">
     
-    <!-- Fonts and Stylesheets -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="style.css">
     
-    <!-- Inline Structured Data (Guarantees Google reads your Schema instantly) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "Randel Youtube Karaoke Player",
       "url": "https://sirr4nd3l.github.io/randelyoutubekaraoke.github.io/",
-      "description": "A beautiful, interactive, and responsive web-based karaoke player using YouTube. Enjoy singing your favorite songs with real-time scoring and dynamic visualizer.",
+      "description": "A beautiful, interactive, and responsive web-based karaoke player using YouTube. Enjoy singing your favorite songs with real-time scoring.",
       "applicationCategory": "EntertainmentApplication",
       "operatingSystem": "All"
     }
@@ -59,7 +55,6 @@
         </div>
     </div>
 
-    <!-- Visible short intro for SEO & UX -->
     <div style="text-align: center; margin-bottom: 20px; padding: 0 20px; max-width: 600px; z-index: 10; position: relative;">
         <p style="color: var(--text-secondary); font-size: 16px; margin: 0; line-height: 1.4;">
             Search and sing karaoke instantly with YouTube songs and real-time scoring.
@@ -93,14 +88,10 @@
                     </div>
                 </div>
 
-                <!-- Turned into a semantic button for proper keyboard/accessibility support -->
                 <button id="audioStatus" class="mic-status" onclick="toggleVisualizer()" aria-label="Toggle Hybrid Audio Scoring">
                     <span aria-hidden="true">🎙️</span> <span id="audioText">Hybrid Audio: Off</span>
                 </button>
 
-                <div class="visualizer-overlay">
-                    <canvas id="visualizerCanvas" aria-label="Audio visualizer canvas" role="img"></canvas>
-                </div>
                 <div id="playerPlaceholder" class="player-placeholder">
                     <div class="welcome-content">
                         <div class="mic-icon" aria-hidden="true">🎙️</div>
@@ -152,7 +143,6 @@
         </div>
     </div>
 
-    <!-- Fixed typo from 'differ' to 'defer' -->
     <script src="app.js" defer></script>
 </body>
 </html>
