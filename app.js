@@ -6,9 +6,6 @@ document.body.appendChild(tag);
 var player;
 var songQueue = [];
 
-// 🎵 CUSTOM SOUND CONFIGURATION
-// To use your own sounds, put the files in the same folder as this HTML file
-// and change the names below (e.g., "my_cheer.mp3")
 const SOUND_EFFECTS = {
     CHEER: "scoreSound.mp3",
     SUCCESS: "scoreSound.mp3",
@@ -160,6 +157,7 @@ function playVideo() {
     player.playVideo();
 }
 
+// Ensure execution flow continues safely if scoring is turned off during standard execution loop
 function pauseVideo() {
     player.pauseVideo();
 }
@@ -211,16 +209,14 @@ async function loadVideo(playNow = true) {
         } else if (url.hostname === 'youtu.be') {
             videoId = url.pathname.slice(1);
         }
-    } catch (e) {
-        // Not a valid URL
-    }
+    } catch (e) { }
 
     if (!videoId && query.length === 11 && !query.includes(' ')) {
         videoId = query;
     }
 
     if (videoId) {
-        document.getElementById('searchInput').value = ""; // clear input after finding
+        document.getElementById('searchInput').value = "";
         handleFoundVideo(videoId, playNow, "Direct Link / ID: " + videoId);
         return;
     }
@@ -321,7 +317,7 @@ async function loadVideo(playNow = true) {
     searchBtn.disabled = false;
 
     if (foundId) {
-        document.getElementById('searchInput').value = ""; // clear input after finding
+        document.getElementById('searchInput').value = "";
         handleFoundVideo(foundId, playNow, foundTitle || searchQuery, foundId ? `https://img.youtube.com/vi/${foundId}/mqdefault.jpg` : null);
     } else {
         alert("Search failed. Please try a different song or paste a YouTube URL.");
@@ -329,24 +325,20 @@ async function loadVideo(playNow = true) {
 }
 
 // =========================================================================
-// 🎙️ HYBRID SCORING LOGIC (Mic + System/Tab Audio Setup)
+// 🎙️ MIC-ONLY SCORING LOGIC
 // =========================================================================
 let audioContext;
 let micAnalyser;
-let systemAnalyser;
 let micDataArray;
-let systemDataArray;
 let micStream;
-let systemStream;
 let visualizerInitialized = false;
 
-// Scoring Variables
 let currentScore = 0;
 let earnedPoints = 0;
 let possiblePoints = 0;
 let scoringInterval;
-let isScoreRevealed = false; // Flag to prevent duplicate triggers
-let scoreAudio = null;       // Global reference to stop sound
+let isScoreRevealed = false;
+let scoreAudio = null;
 
 async function toggleVisualizer() {
     const statusEl = document.getElementById('audioStatus');
@@ -357,24 +349,17 @@ async function toggleVisualizer() {
     if (visualizerInitialized) {
         stopScoring();
         if (micStream) micStream.getTracks().forEach(track => track.stop());
-        if (systemStream) systemStream.getTracks().forEach(track => track.stop());
         visualizerInitialized = false;
         statusEl.classList.remove('active');
-        textEl.innerText = "Hybrid Audio: Off";
+        textEl.innerText = "Mic Scoring: Off";
         scoreMeter.style.display = "none";
         liveBadge.style.display = "none";
         return;
     }
 
     try {
-        // 1. Request Microphone
+        // Request ONLY local user mic permission
         micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        
-        // 2. Request System/Tab Audio
-        systemStream = await navigator.mediaDevices.getDisplayMedia({
-            video: { width: 1, height: 1 },
-            audio: true
-        });
 
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -383,36 +368,24 @@ async function toggleVisualizer() {
         micAnalyser = audioContext.createAnalyser();
         micAnalyser.fftSize = 64;
         
-        systemAnalyser = audioContext.createAnalyser();
-        systemAnalyser.fftSize = 64;
-        
-        // Create sources
         const micSource = audioContext.createMediaStreamSource(micStream);
-        const systemSource = audioContext.createMediaStreamSource(systemStream);
-        
         micSource.connect(micAnalyser);
-        systemSource.connect(systemAnalyser);
         
         micDataArray = new Uint8Array(micAnalyser.frequencyBinCount);
-        systemDataArray = new Uint8Array(systemAnalyser.frequencyBinCount);
         
         visualizerInitialized = true;
         statusEl.classList.add('active');
-        textEl.innerText = "Hybrid: Scoring Active";
+        textEl.innerText = "Mic: Scoring Active";
         scoreMeter.style.display = "flex";
         liveBadge.style.display = "flex";
-
-        // Stop the video track from systemStream
-        systemStream.getVideoTracks().forEach(track => track.stop());
         
         startScoring();
         
     } catch (err) {
         console.error("Audio access denied:", err);
-        alert("Scoring requires both Mic and System Audio access. Please allow both and ensure 'Share Audio' is checked!");
+        alert("Scoring requires Microphone access. Please grant mic permission to sing!");
         
         if (micStream) micStream.getTracks().forEach(track => track.stop());
-        if (systemStream) systemStream.getTracks().forEach(track => track.stop());
         visualizerInitialized = false;
     }
 }
@@ -428,35 +401,22 @@ function stopScoring() {
 }
 
 function updateScore() {
-    if (!visualizerInitialized || !micAnalyser || !systemAnalyser) return;
+    if (!visualizerInitialized || !micAnalyser) return;
     
     const isPlaying = player && player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING;
     if (!isPlaying) return;
 
     micAnalyser.getByteFrequencyData(micDataArray);
-    systemAnalyser.getByteFrequencyData(systemDataArray);
 
-    // Calculate Energy
     let micEnergy = 0;
     for (let i = 0; i < micDataArray.length; i++) micEnergy += micDataArray[i];
     micEnergy /= micDataArray.length;
 
-    let systemEnergy = 0;
-    for (let i = 0; i < systemDataArray.length; i++) systemEnergy += systemDataArray[i];
-    systemEnergy /= systemDataArray.length;
-
-    // INCREMENT POSSIBLE POINTS
     possiblePoints += 1.0;
 
-    // CALCULATE EARNED POINTS
-    if (micEnergy > 30) {
-        let tickEarned = Math.min(micEnergy / 180, 0.8);
-        
-        // Rhythm matching bonus
-        if (systemEnergy > 40 && Math.abs(micEnergy - systemEnergy) < 40) {
-            tickEarned += 0.2;
-        }
-        
+    // Evaluate singer volume levels against dynamic ranges cleanly
+    if (micEnergy > 25) { 
+        let tickEarned = Math.min(micEnergy / 150, 1.0);
         earnedPoints += tickEarned;
     }
 
@@ -464,7 +424,6 @@ function updateScore() {
         currentScore = (earnedPoints / possiblePoints) * 100;
     }
 
-    // UI Update
     const displayScore = Math.min(Math.floor(currentScore), 100);
     document.getElementById('scoreBarFill').style.width = displayScore + "%";
     document.getElementById('liveScoreValue').innerText = displayScore;
