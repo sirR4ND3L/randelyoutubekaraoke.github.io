@@ -469,48 +469,54 @@ function updateScore() {
     const isPlaying = player && player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING;
     if (!isPlaying) return;
 
-    // Fetch time-domain data instead of frequency distribution data for pitch extraction
     micAnalyser.getFloatTimeDomainData(micBuffer);
 
-    // Calculate Raw Energy Amplitude Level
+    // 1. Calculate precise RMS Volume Energy
     let sumSquares = 0;
     for (let i = 0; i < micBuffer.length; i++) {
         sumSquares += micBuffer[i] * micBuffer[i];
     }
     let vocalVolumeEnergy = Math.sqrt(sumSquares / micBuffer.length) * 100;
 
-    // Extract precise pitch frequency
+    // 2. Extract pitch
     let currentPitch = autoCorrelate(micBuffer, audioContext.sampleRate);
 
     possiblePoints += 1.0;
 
-    // Threshold Gate: If singer is active and above room noise thresholds
-    if (vocalVolumeEnergy > 1.5) {
+    // TIGHTENED FILTER: Must be louder than 3.0 to register as intentional singing (Filters background noise)
+    if (vocalVolumeEnergy > 3.0) {
         let frameMultiplier = 1.0;
 
         if (currentPitch > 0) {
             if (lastDetectedPitch > 0) {
                 let pitchDelta = Math.abs(currentPitch - lastDetectedPitch);
                 
-                // Intonation check: Smooth, controlled note lines get a 1.2x boost.
-                // Chaotic, wild tracking variations (speaking/coughing) scale back point payouts.
-                if (pitchDelta < 25) {
-                    frameMultiplier = 1.2; 
-                } else if (pitchDelta > 150) {
-                    frameMultiplier = 0.4; 
+                // ACCURACY ADJUSTMENT:
+                // If pitch is perfectly flat down to 0Hz difference over multiple frames, 
+                // they are probably just monotone humming or cheating. Scale points back.
+                if (pitchDelta === 0) {
+                    frameMultiplier = 0.3; 
+                } 
+                // Good melodic movement (normal singing transitions between notes)
+                else if (pitchDelta > 5 && pitchDelta < 40) {
+                    frameMultiplier = 1.3; // Reward active singing
+                } 
+                // Chaotic, screeching, or talking noise
+                else if (pitchDelta > 120) {
+                    frameMultiplier = 0.2; 
                 }
             }
             lastDetectedPitch = currentPitch;
         } else {
-            // Singing energy detected, but no recognizable musical pitch found (talking/shouting noise)
-            frameMultiplier = 0.5;
+            // No clear musical tone found
+            frameMultiplier = 0.4;
         }
 
-        // Add dynamically weighted performance points to current timeline pools
-        let earnedTick = Math.min((vocalVolumeEnergy / 12) * frameMultiplier, 1.2);
+        // Calculate and cap the tick earned
+        let earnedTick = Math.min((vocalVolumeEnergy / 15) * frameMultiplier, 1.2);
         earnedPoints += earnedTick;
     } else {
-        // Clear history tracking parameters if singer stops
+        // Singer went quiet, clear history tracking parameters safely
         lastDetectedPitch = 0;
     }
 
@@ -518,6 +524,7 @@ function updateScore() {
         currentScore = (earnedPoints / possiblePoints) * 100;
     }
 
+    // Cap the final scoring ranges clearly
     const displayScore = Math.min(Math.floor(currentScore), 100);
     document.getElementById('scoreBarFill').style.width = displayScore + "%";
     document.getElementById('liveScoreValue').innerText = displayScore;
