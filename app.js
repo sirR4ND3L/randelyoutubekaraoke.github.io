@@ -157,7 +157,6 @@ function playVideo() {
     player.playVideo();
 }
 
-// Ensure execution flow continues safely if scoring is turned off during standard execution loop
 function pauseVideo() {
     player.pauseVideo();
 }
@@ -325,11 +324,11 @@ async function loadVideo(playNow = true) {
 }
 
 // =========================================================================
-// 🎙️ MIC-ONLY SCORING LOGIC
+// 🎙️ MIC-ONLY ADVANCED PITCH-TRACKING SCORING ENGINE
 // =========================================================================
 let audioContext;
 let micAnalyser;
-let micDataArray;
+let micBuffer; // Time-domain array buffer for Autocorrelation
 let micStream;
 let visualizerInitialized = false;
 
@@ -339,6 +338,8 @@ let possiblePoints = 0;
 let scoringInterval;
 let isScoreRevealed = false;
 let scoreAudio = null;
+
+let lastDetectedPitch = 0; // Tracks note changes for stability analytics
 
 async function toggleVisualizer() {
     const statusEl = document.getElementById('audioStatus');
@@ -358,7 +359,6 @@ async function toggleVisualizer() {
     }
 
     try {
-        // Request ONLY local user mic permission
         micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
         if (!audioContext) {
@@ -366,12 +366,13 @@ async function toggleVisualizer() {
         }
         
         micAnalyser = audioContext.createAnalyser();
-        micAnalyser.fftSize = 64;
+        // Set fftSize high (2048) to capture detailed time-domain samples for accurate pitch analysis
+        micAnalyser.fftSize = 2048; 
         
         const micSource = audioContext.createMediaStreamSource(micStream);
         micSource.connect(micAnalyser);
         
-        micDataArray = new Uint8Array(micAnalyser.frequencyBinCount);
+        micBuffer = new Float32Array(micAnalyser.fftSize);
         
         visualizerInitialized = true;
         statusEl.classList.add('active');
@@ -392,12 +393,74 @@ async function toggleVisualizer() {
 
 function startScoring() {
     if (scoringInterval) clearInterval(scoringInterval);
-    scoringInterval = setInterval(updateScore, 200);
+    scoringInterval = setInterval(updateScore, 200); // Evaluates 5 frames per second
 }
 
 function stopScoring() {
     if (scoringInterval) clearInterval(scoringInterval);
     scoringInterval = null;
+}
+
+/**
+ * Time-Domain Autocorrelation Pitch Extraction Algorithm
+ * Calculates fundamental frequency (f0) from raw micro-buffer data arrays.
+ */
+function autoCorrelate(buffer, sampleRate) {
+    // 1. Evaluate signal root mean square (RMS) amplitude energy
+    let size = buffer.length;
+    let rms = 0;
+
+    for (let i = 0; i < size; i++) {
+        let val = buffer[i];
+        rms += val * val;
+    }
+    rms = Math.sqrt(rms / size);
+    
+    // Noise floor gate: Signal too quiet to track pitch cleanly
+    if (rms < 0.015) return -1; 
+
+    // 2. Truncate signal window boundaries to extract clear periodic peaks
+    let r1 = 0, r2 = size - 1;
+    let thres = 0.2;
+    for (let i = 0; i < size / 2; i++) {
+        if (Math.abs(buffer[i]) < thres) { r1 = i; break; }
+    }
+    for (let i = size - 1; i >= size / 2; i--) {
+        if (Math.abs(buffer[i]) < thres) { r2 = i; break; }
+    }
+    let clippedBuffer = buffer.slice(r1, r2);
+    let clippedSize = clippedBuffer.length;
+
+    // 3. Run Autocorrelation processing shifts
+    let c = new Float32Array(clippedSize);
+    for (let i = 0; i < clippedSize; i++) {
+        for (let j = 0; j < clippedSize - i; j++) {
+            c[i] += clippedBuffer[j] * clippedBuffer[j + i];
+        }
+    }
+
+    // Find the first zero-crossing point
+    let d = 0;
+    while (c[d] > 0) d++;
+    
+    // Detect principal frequency peaks beyond zero-cross thresholds
+    let maxVal = -1;
+    let maxPeriod = -1;
+    for (let i = d; i < clippedSize; i++) {
+        if (c[i] > maxVal) {
+            maxVal = c[i];
+            maxPeriod = i;
+        }
+    }
+
+    let fundamentalFrequency = sampleRate / maxPeriod;
+    
+    // Standard human vocal capability range threshold verification (50Hz - 2000Hz)
+    if (fundamentalFrequency > 50 && fundamentalFrequency < 2000) {
+        return fundamentalFrequency;
+    }
+    
+    return -1;
 }
 
 function updateScore() {
@@ -406,18 +469,49 @@ function updateScore() {
     const isPlaying = player && player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING;
     if (!isPlaying) return;
 
-    micAnalyser.getByteFrequencyData(micDataArray);
+    // Fetch time-domain data instead of frequency distribution data for pitch extraction
+    micAnalyser.getFloatTimeDomainData(micBuffer);
 
-    let micEnergy = 0;
-    for (let i = 0; i < micDataArray.length; i++) micEnergy += micDataArray[i];
-    micEnergy /= micDataArray.length;
+    // Calculate Raw Energy Amplitude Level
+    let sumSquares = 0;
+    for (let i = 0; i < micBuffer.length; i++) {
+        sumSquares += micBuffer[i] * micBuffer[i];
+    }
+    let vocalVolumeEnergy = Math.sqrt(sumSquares / micBuffer.length) * 100;
+
+    // Extract precise pitch frequency
+    let currentPitch = autoCorrelate(micBuffer, audioContext.sampleRate);
 
     possiblePoints += 1.0;
 
-    // Evaluate singer volume levels against dynamic ranges cleanly
-    if (micEnergy > 25) { 
-        let tickEarned = Math.min(micEnergy / 150, 1.0);
-        earnedPoints += tickEarned;
+    // Threshold Gate: If singer is active and above room noise thresholds
+    if (vocalVolumeEnergy > 1.5) {
+        let frameMultiplier = 1.0;
+
+        if (currentPitch > 0) {
+            if (lastDetectedPitch > 0) {
+                let pitchDelta = Math.abs(currentPitch - lastDetectedPitch);
+                
+                // Intonation check: Smooth, controlled note lines get a 1.2x boost.
+                // Chaotic, wild tracking variations (speaking/coughing) scale back point payouts.
+                if (pitchDelta < 25) {
+                    frameMultiplier = 1.2; 
+                } else if (pitchDelta > 150) {
+                    frameMultiplier = 0.4; 
+                }
+            }
+            lastDetectedPitch = currentPitch;
+        } else {
+            // Singing energy detected, but no recognizable musical pitch found (talking/shouting noise)
+            frameMultiplier = 0.5;
+        }
+
+        // Add dynamically weighted performance points to current timeline pools
+        let earnedTick = Math.min((vocalVolumeEnergy / 12) * frameMultiplier, 1.2);
+        earnedPoints += earnedTick;
+    } else {
+        // Clear history tracking parameters if singer stops
+        lastDetectedPitch = 0;
     }
 
     if (possiblePoints > 0) {
@@ -566,6 +660,7 @@ function resetScore() {
     earnedPoints = 0;
     possiblePoints = 0;
     isScoreRevealed = false;
+    lastDetectedPitch = 0;
     document.getElementById('scoreBarFill').style.width = "0%";
     document.getElementById('liveScoreValue').innerText = "0";
     document.getElementById('liveScorePlayer').innerText = "0";
