@@ -232,20 +232,13 @@ async function loadVideo(playNow = true) {
     let foundId = null;
     let foundTitle = null;
 
-    // Automatically append "karaoke" if it's not already in the search
     let searchQuery = query;
     if (!searchQuery.toLowerCase().includes('karaoke')) {
         searchQuery += ' karaoke';
     }
 
-    // =========================================================================
-    // ⭐️ YOUTUBE DATA API (RECOMMENDED FOR PRODUCTION / NETLIFY)
-    // To make search work reliably without CORS errors, 
-    // replace "YOUR_API_KEY_HERE" with a free YouTube Data API v3 Key.
-    // =========================================================================
     const YOUTUBE_API_KEY = "AIzaSyBthjxnP2yj4_3tLVFhVHqRi7TwP2_jUlI";
 
-    // Make sure we have a valid-looking API key before trying
     if (YOUTUBE_API_KEY && YOUTUBE_API_KEY.length > 20 && !YOUTUBE_API_KEY.includes('YOUR_API_KEY')) {
         try {
             let res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${encodeURIComponent(searchQuery)}&type=video&videoEmbeddable=true&key=${YOUTUBE_API_KEY}`);
@@ -263,7 +256,6 @@ async function loadVideo(playNow = true) {
         }
     }
 
-    // Fallback to public proxies if no API key is provided
     if (!foundId) {
         const instances = [
             'https://invidious.nerdvpn.de/api/v1/search?q=',
@@ -296,15 +288,12 @@ async function loadVideo(playNow = true) {
         for (let baseUrl of instances) {
             let targetUrl = baseUrl + encodeURIComponent(searchQuery);
 
-            // 1. Try direct fetch
             foundId = await fetchSearch(targetUrl);
             if (foundId) break;
 
-            // 2. Try via codetabs proxy
             foundId = await fetchSearch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`);
             if (foundId) break;
 
-            // 3. Try via allorigins proxy
             try {
                 let res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
                 if (res.ok) {
@@ -340,7 +329,7 @@ async function loadVideo(playNow = true) {
 }
 
 // =========================================================================
-// 🎙️ HYBRID REACTIVE VISUALIZER LOGIC (Mic + System/Tab Audio)
+// 🎙️ HYBRID SCORING LOGIC (Mic + System/Tab Audio Setup)
 // =========================================================================
 let audioContext;
 let micAnalyser;
@@ -350,7 +339,6 @@ let systemDataArray;
 let micStream;
 let systemStream;
 let visualizerInitialized = false;
-let simTime = 0;
 
 // Scoring Variables
 let currentScore = 0;
@@ -457,12 +445,11 @@ function updateScore() {
     for (let i = 0; i < systemDataArray.length; i++) systemEnergy += systemDataArray[i];
     systemEnergy /= systemDataArray.length;
 
-    // INCREMENT POSSIBLE POINTS (The "Perfect" baseline)
+    // INCREMENT POSSIBLE POINTS
     possiblePoints += 1.0;
 
-    // CALCULATE EARNED POINTS (The "User" performance)
+    // CALCULATE EARNED POINTS
     if (micEnergy > 30) {
-        // Base score for singing (accuracy relative to volume)
         let tickEarned = Math.min(micEnergy / 180, 0.8);
         
         // Rhythm matching bonus
@@ -473,7 +460,6 @@ function updateScore() {
         earnedPoints += tickEarned;
     }
 
-    // FINAL CALCULATION: Percentage of perfection
     if (possiblePoints > 0) {
         currentScore = (earnedPoints / possiblePoints) * 100;
     }
@@ -487,7 +473,7 @@ function updateScore() {
 
 function showFinalScore() {
     if (!visualizerInitialized || isScoreRevealed) return;
-    isScoreRevealed = true; // Mark as revealed immediately
+    isScoreRevealed = true;
 
     const score = Math.min(Math.floor(currentScore), 100);
     const overlay = document.getElementById('scoreOverlay');
@@ -529,8 +515,6 @@ function showFinalScore() {
     stopScoring();
     playScoreSound(rank);
 
-
-    // Auto-close synced with the score sound
     if (scoreAudio) {
         if (songQueue.length > 0) {
             msgEl.innerText = "Waiting for sound...";
@@ -538,7 +522,6 @@ function showFinalScore() {
             msgEl.innerText = "Done! Select a new song or wait...";
         }
         
-        // Update countdown as sound plays
         scoreAudio.addEventListener('timeupdate', () => {
             if (overlay.classList.contains('active') && !isNaN(scoreAudio.duration)) {
                 const remaining = Math.ceil(scoreAudio.duration - scoreAudio.currentTime);
@@ -550,14 +533,12 @@ function showFinalScore() {
             }
         });
 
-        // Close overlay when sound finishes
         scoreAudio.addEventListener('ended', () => {
             if (overlay.classList.contains('active')) {
                 closeScore();
             }
         });
 
-        // Fallback in case audio is blocked by browser policy
         scoreAudio.addEventListener('error', startFallbackTimer);
     } else {
         startFallbackTimer();
@@ -587,7 +568,6 @@ function showFinalScore() {
 }
 
 function playScoreSound(rank) {
-    // Stop any previous sound first
     if (scoreAudio) {
         scoreAudio.pause();
         scoreAudio = null;
@@ -613,7 +593,6 @@ function playScoreSound(rank) {
 }
 
 function closeScore() {
-    // Stop the sound when closing the overlay
     if (scoreAudio) {
         scoreAudio.pause();
         scoreAudio = null;
@@ -627,80 +606,11 @@ function resetScore() {
     currentScore = 0;
     earnedPoints = 0;
     possiblePoints = 0;
-    isScoreRevealed = false; // Reset the flag for the next song
+    isScoreRevealed = false;
     document.getElementById('scoreBarFill').style.width = "0%";
     document.getElementById('liveScoreValue').innerText = "0";
     document.getElementById('liveScorePlayer').innerText = "0";
 }
-
-function drawVisualizer() {
-    const canvas = document.getElementById('visualizerCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-
-    // Pre-fill if not yet initialized
-    if (!systemDataArray) systemDataArray = new Uint8Array(32);
-
-    function render() {
-        requestAnimationFrame(render);
-        simTime += 0.05;
-        
-        const isPlaying = player && player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING;
-        
-        if (visualizerInitialized && systemAnalyser) {
-            systemAnalyser.getByteFrequencyData(systemDataArray);
-        } else {
-            // SIMULATION MODE
-            for (let i = 0; i < systemDataArray.length; i++) {
-                if (isPlaying) {
-                    const wave = Math.sin(simTime + i * 0.3) * 0.5 + 0.5;
-                    systemDataArray[i] = (wave + Math.random() * 0.2) * 150;
-                } else {
-                    systemDataArray[i] = (Math.sin(simTime * 0.5 + i * 0.1) * 0.5 + 0.5) * 40;
-                }
-            }
-        }
-        
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        const barWidth = (canvas.width / systemDataArray.length) * 0.8;
-        let x = 0;
-        
-        for (let i = 0; i < systemDataArray.length; i++) {
-            let barHeight = (systemDataArray[i] / 255) * canvas.height;
-            if (!isPlaying && visualizerInitialized) barHeight *= 0.1;
-
-            const gradient = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
-            if (visualizerInitialized) {
-                gradient.addColorStop(0, 'rgba(0, 122, 255, 0.9)');
-                gradient.addColorStop(1, 'rgba(0, 200, 255, 0.5)');
-            } else {
-                gradient.addColorStop(0, 'rgba(0, 200, 255, 0.4)');
-                gradient.addColorStop(1, 'rgba(0, 255, 255, 0.1)');
-            }
-            
-            ctx.fillStyle = gradient;
-            const radius = barWidth / 2;
-            const barX = x + (canvas.width / systemDataArray.length - barWidth) / 2;
-            const barY = canvas.height - barHeight;
-            
-            if (barHeight > 1) {
-                ctx.beginPath();
-                ctx.roundRect(barX, barY, barWidth, barHeight, [radius, radius, 0, 0]);
-                ctx.fill();
-            }
-            x += canvas.width / systemDataArray.length;
-        }
-    }
-    render();
-}
-
-// Start simulation immediately on load
-window.addEventListener('load', () => {
-    drawVisualizer();
-});
 
 function startSync() {
     setInterval(() => {
